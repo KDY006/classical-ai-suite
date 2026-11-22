@@ -42,6 +42,7 @@ python task2/main_task2.py
 python task2/main_task2.py --cli
 ```
 - File Notebook thực nghiệm (đã lưu sẵn toàn bộ kết quả đầu ra và biểu đồ): `task2/benchmark_task2.ipynb`.
+- Các nút giao diện: `Play/Pause`, `Step`, `Reset`, `−` / `+` và `Reload bots`.
 
 ### Task 3: Câu đố Kakuro (Bộ giải CSP & Giao diện trực quan hóa PyGame)
 ```bash
@@ -57,7 +58,7 @@ python task3/main_task3.py --cli
 
 ## 3. Hướng Dẫn Tích Hợp Bot Nhóm Khác Vào Task 2 (`external_agents/`)
 
-Đặt file `.py` chứa thuật toán của nhóm bạn vào thư mục `task2/agents/external_agents/`, sau đó nhấn nút **`Reload external_agents/*.py`** trên giao diện PyGame của Task 2. Hệ thống hỗ trợ 2 cách viết:
+Đặt file `.py` chứa thuật toán của nhóm bạn vào thư mục `task2/agents/external_agents/`, sau đó nhấn nút **`Reload bots`** trên giao diện PyGame của Task 2. Hệ thống hỗ trợ 2 cách viết:
 
 1. **Cách 1 (Kế thừa lớp OOP `BaseTankAgent`)**: Xem file mẫu `task2/agents/external_agents/sample_oop_bot.py`.
 2. **Cách 2 (Viết hàm độc lập `get_action(obs: dict) -> str`)**: Xem file mẫu `task2/agents/external_agents/sample_dict_bot.py` — nhận vào một `dict` thuần chứa toàn bộ trạng thái bàn cờ và trả về 1 trong 6 hành động hợp lệ (`"MOVE_UP"`, `"MOVE_DOWN"`, `"MOVE_LEFT"`, `"MOVE_RIGHT"`, `"FIRE"`, `"STAY"`).

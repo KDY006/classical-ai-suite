@@ -1,4 +1,4 @@
-"""Adversarial search agents and dynamic external bot plugin loader for Tank Battle."""
+"""Tank Battle agents and external bot discovery."""
 
 from .alphabeta_agent import AlphaBetaAgent
 from .base_agent import (
@@ -8,7 +8,7 @@ from .base_agent import (
     discover_external_agents,
 )
 from .evaluation import TacticalEvaluator
-from .heuristic_ab import HeuristicAlphaBetaAgent
+from .heuristic_ab import EXACT, LOWER, TTEntry, UPPER, HeuristicAlphaBetaAgent
 from .heuristic_minimax import HeuristicMinimaxAgent
 from .minimax_agent import MinimaxAgent
 
@@ -22,4 +22,8 @@ __all__ = [
     "AlphaBetaAgent",
     "HeuristicMinimaxAgent",
     "HeuristicAlphaBetaAgent",
+    "TTEntry",
+    "EXACT",
+    "LOWER",
+    "UPPER",
 ]

@@ -73,13 +73,27 @@ For real-time play, depth-limited search replaces non-terminal leaves at cutoff 
 augmented with tactical \emph{Move Ordering} (prioritizing aligned shots and projectile evasion) and a hash-keyed \emph{Transposition Table}.
 
 \subsection{Four-Configuration Benchmark and PyGame Plugin Arena}
-Because full-HP games require $\ge 12$ plies to reach terminal states, we design a two-tier benchmark: Tier-1 tactical endgame scenarios ($7\times 7$, $1\text{--}2$~HP) enabling exact comparison of all four algorithms, and Tier-2 full $9\times 9$ and $11\times 11$ arenas. On \emph{Endgame Center Duel}, Pure Minimax explores $30{,}278$ states ($639.1$~ms), Pure Alpha-Beta explores $2{,}213$ states ($48.5$~ms) for the identical optimal move, Heuristic Minimax ($d=4$) explores $1{,}004$ states ($28.2$~ms), and Heuristic Alpha-Beta explores only $34$ states ($1.4$~ms)---an $890\times$ state reduction (Fig.~\ref{fig:task2_bench}). Our PyGame GUI dynamically discovers external bots from \texttt{external\_agents/*.py} via both \texttt{BaseTankAgent} subclassing and dictionary adapters while isolating state via deep cloning.
+Because full-HP games require $\ge 12$ plies to reach terminal states, we design a two-tier benchmark: Tier-1 tactical endgame scenarios ($7\times 7$, $1\text{--}2$~HP) enabling exact comparison of all four algorithms, and Tier-2 full $9\times 9$ and $11\times 11$ arenas. On \emph{Endgame Center Duel}, Pure Minimax explores $30{,}278$ states ($540.72$~ms), Pure Alpha-Beta explores $2{,}213$ states ($45.62$~ms) for the same selected action, Heuristic Minimax ($d=4$) explores $1{,}004$ states ($27.76$~ms), and Heuristic Alpha-Beta explores $34$ states ($1.53$~ms)---an approximately $890\times$ state reduction (Fig.~\ref{fig:task2_bench}). On the depth-4 Tier-2 runs, Heuristic Alpha-Beta searches $94$ states on Classic 9$\times$9 ($4.21$~ms, 5 TT hits) and $213$ on Fortress 11$\times$11 ($9.58$~ms, 16 TT hits), compared with $895$ and $1{,}478$ states for Heuristic Minimax. Figure~\ref{fig:task2_tier2} compares both algorithms at depths 2--4; reported times are from one run and vary by machine. Our PyGame GUI discovers external bots through both \texttt{BaseTankAgent} subclasses and dictionary adapters, isolating state with immutable game snapshots and fresh observations. UI sprites are from Kenney's \emph{Top-down Tanks Redux} asset pack, distributed under CC0 1.0 Public Domain~\cite{kenneyTopDownTanksRedux}.
 
 \begin{figure}[t]
     \centering
     \includegraphics[width=\columnwidth]{figures/task2_four_algo_comparison.png}
     \caption{Explored states and decision time across all 4 search configurations.}
     \label{fig:task2_bench}
+\end{figure}
+
+\begin{figure*}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{figures/task2_tier2_9x9_vs_11x11.png}
+    \caption{Tier-2 search states and decision time for the 9$\times$9 and 11$\times$11 arenas at depths 2--4.}
+    \label{fig:task2_tier2}
+\end{figure*}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/task2_arena_ui.png}
+    \caption{Responsive two-column PyGame arena with the updated Tank Battle sprites and search telemetry.}
+    \label{fig:task2_ui}
 \end{figure}
 
 \section{Task 3: Kakuro Puzzle as a Constraint Satisfaction Problem}

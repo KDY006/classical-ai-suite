@@ -93,6 +93,7 @@ AI_final_<Project_Group_ID>_<Student_ID>/
     │   │       ├── sample_oop_bot.py   # Bot mẫu nhóm ngoài theo chuẩn kế thừa lớp BaseTankAgent
     │   │       └── sample_dict_bot.py  # Bot mẫu nhóm ngoài theo chuẩn hàm độc lập get_action(obs_dict)
     │   ├── ui/
+    │   │   ├── assets/                 # 9 sprite Kenney (CC0); kèm file CREDITS.txt
     │   │   └── pygame_arena.py         # Giao diện đồ họa PyGame Arena trực quan
     │   ├── main_task2.py               # Điểm khởi chạy giao diện PyGame hoặc benchmark dòng lệnh Task 2
     │   └── benchmark_task2.ipynb       # Jupyter Notebook thực nghiệm 4 cấu hình Task 2 (giữ nguyên output)
@@ -154,11 +155,11 @@ python source/task2/main_task2.py
   - `Pure Minimax (cap=5)`
   - `Human (WASD + Space)` (Chế độ người chơi trực tiếp bằng bàn phím!)
   - Các bot của nhóm khác nằm trong thư mục `external_agents/` (ví dụ: `Ext: BaseHunter (Dict API)`, `Ext: GreedyStriker (OOP)`).
-- **Nút `Auto Play / Pause`**: Tự động chạy liên tục trận đấu giữa 2 AI hoặc tạm dừng.
-- **Nút `Step 1 Turn`**: Chạy từng lượt một để quan sát kỹ hướng xoay xe tăng, đường đạn bay 3 ô/chu kỳ và thông số duyệt cây tìm kiếm ở bảng bên phải.
-- **Nút `Reset Match`**: Khởi tạo lại ván đấu về trạng thái ban đầu.
-- **Nút `Speed -` / `Speed +`**: Giảm hoặc tăng tốc độ diễn hoạt giữa các lượt.
-- **Nút `Reload external_agents/*.py`**: Quét và nạp lại ngay lập tức các file bot mới vừa được chép vào thư mục `source/task2/agents/external_agents/` mà không cần tắt game.
+- **Nút `Play/Pause`**: Tự động chạy liên tục trận đấu giữa 2 AI hoặc tạm dừng.
+- **Nút `Step`**: Chạy một lượt để quan sát hướng xoay xe tăng, đường đạn bay 3 ô/chu kỳ và thông số tìm kiếm ở bảng bên phải.
+- **Nút `Reset`**: Khởi tạo lại ván đấu về trạng thái ban đầu.
+- **Nút `−` / `+`**: Giảm hoặc tăng tốc độ diễn hoạt giữa các lượt.
+- **Nút `Reload bots`**: Quét và nạp lại các file bot trong `source/task2/agents/external_agents/` mà không cần tắt game.
 - **Phím tắt khi chọn chế độ `Human (WASD + Space)`**:
   - `W` / `Mũi tên Lên`: `MOVE_UP`
   - `S` / `Mũi tên Xuống`: `MOVE_DOWN`

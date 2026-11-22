@@ -1,10 +1,13 @@
-"""PyGame GUI Arena for Task 2: Tank Battle with live telemetry and external bot selector."""
+"""Minimal two-column PyGame arena for Tank Battle."""
 
 from __future__ import annotations
 
+import ctypes
+import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Optional, Tuple
+from typing import Dict, List
 
 import pygame
 
@@ -32,7 +35,6 @@ from ..config import (
     PLAYER_MIN,
     STAY,
     TANK_INITIAL_HP,
-    WALL_INITIAL_HP,
 )
 from ..engine import GameState, MapScenario, StepEvent, TankBattleEngine, get_all_scenarios
 
@@ -45,90 +47,144 @@ class UIButton:
 
 
 class HumanController:
-    """Placeholder sentinel representing keyboard control inside PyGame."""
+    """Sentinel controller for a player operated from the keyboard."""
 
     def __init__(self) -> None:
-        self.name = "Human (WASD + Space)"
+        self.name = "Human"
         self.last_metrics = SearchMetrics()
 
 
 class TankBattleArenaUI:
-    """Interactive PyGame Arena supporting AI vs AI, Human vs AI, and External Bot Plugins."""
+    """Responsive two-column game board and match-control panel."""
 
-    WINDOW_W: int = 1120
-    WINDOW_H: int = 740
-    BOARD_AREA_SIZE: int = 640
-    BOARD_MARGIN_X: int = 28
-    BOARD_MARGIN_Y: int = 64
+    WINDOW_W = 920
+    WINDOW_H = 600
 
-    BG_COLOR = (18, 22, 30)
-    GRID_BG = (28, 34, 46)
-    GRID_LINE = (46, 54, 72)
-    PANEL_BG = (25, 30, 42)
-    PANEL_BORDER = (62, 74, 98)
-    TEXT_MAIN = (235, 240, 248)
-    TEXT_MUTED = (158, 170, 192)
-    MAX_COLOR = (64, 156, 255)
-    MIN_COLOR = (242, 88, 88)
-    BRICK_COLOR = (186, 98, 56)
-    STEEL_COLOR = (142, 154, 172)
-    BULLET_COLOR = (255, 224, 92)
-    ACCENT_GREEN = (68, 204, 136)
+    BG = (15, 19, 27)
+    PANEL = (24, 30, 41)
+    PANEL_ALT = (30, 37, 50)
+    BORDER = (47, 57, 74)
+    TEXT = (235, 240, 248)
+    MUTED = (145, 158, 178)
+    BLUE = (77, 165, 255)
+    RED = (255, 104, 104)
+    GREEN = (82, 211, 151)
+    GOLD = (255, 204, 92)
+    BRICK = (168, 103, 70)
+    STEEL = (131, 147, 168)
+
+    ASSET_FILES = {
+        "tank_max": "tank_blue.png",
+        "tank_min": "tank_red.png",
+        "bullet_max": "bulletBlue1_outline.png",
+        "bullet_min": "bulletRed1_outline.png",
+        "base": "crateMetal.png",
+        "brick": "crateWood.png",
+        "steel": "barricadeMetal.png",
+        "grass_a": "tileGrass1.png",
+        "grass_b": "tileGrass2.png",
+    }
+
+    DIRECTION_ANGLE = {
+        DIR_UP: 0,
+        DIR_RIGHT: -90,
+        DIR_DOWN: 180,
+        DIR_LEFT: 90,
+    }
 
     def __init__(self) -> None:
         pygame.init()
-        pygame.display.set_caption("Task 2 - Tank Battle Adversarial Search Arena (TDTU AI)")
-        self.screen = pygame.display.set_mode((self.WINDOW_W, self.WINDOW_H))
+        pygame.display.set_caption("Tank Battle | Adversarial Search Arena")
+        window_size = self._initial_window_size()
+        self.screen = pygame.display.set_mode(
+            window_size,
+            pygame.RESIZABLE,
+        )
         self.clock = pygame.time.Clock()
 
-        self.font_title = pygame.font.SysFont("Arial", 20, bold=True)
-        self.font_ui = pygame.font.SysFont("Arial", 15, bold=True)
-        self.font_small = pygame.font.SysFont("Arial", 13)
-        self.font_mono = pygame.font.SysFont("Consolas", 13)
+        self.font_title = pygame.font.SysFont("Segoe UI", 22, bold=True)
+        self.font_heading = pygame.font.SysFont("Segoe UI", 15, bold=True)
+        self.font_ui = pygame.font.SysFont("Segoe UI", 14)
+        self.font_small = pygame.font.SysFont("Segoe UI", 12)
+        self.font_mono = pygame.font.SysFont("Consolas", 12)
+
+        self.asset_dir = Path(__file__).resolve().parent / "assets"
+        self.sprites: Dict[str, Optional[pygame.Surface]] = {}
+        self._sprite_cache: Dict[tuple[str, int, int, int], pygame.Surface] = {}
+        self._load_sprites()
 
         self.scenarios: List[MapScenario] = get_all_scenarios()
-        self.scenario_idx: int = 0
-
+        self.scenario_idx = 0
         self.controllers: List[object] = self._build_controllers()
-        self.max_ctrl_idx: int = 0  # Heuristic Alpha-Beta default
-        self.min_ctrl_idx: int = 1  # Heuristic Minimax default
+        self.max_ctrl_idx = 0
+        self.min_ctrl_idx = 1 if len(self.controllers) > 1 else 0
+        self.state = self.scenarios[self.scenario_idx].builder()
 
-        self.state: GameState = self.scenarios[self.scenario_idx].builder()
-        self.auto_play: bool = False
-        self.step_delay_ms: int = 280
-        self.last_step_tick: int = 0
+        self.auto_play = False
+        self.step_delay_ms = 300
+        self.last_step_tick = 0
         self.action_log: List[str] = []
         self.last_impacts: List[Tuple[int, int, str]] = []
         self.anim_frames: List[List[Tuple[int, int, int, str]]] = []
-        self.anim_tick: int = 0
+        self.anim_tick = 0
+        self.buttons: List[UIButton] = []
+        self._board_rect = pygame.Rect(0, 0, 0, 0)
+        self._cell_px = 0
 
-        self.buttons: List[UIButton] = self._create_buttons()
+    @classmethod
+    def _initial_window_size(cls) -> Tuple[int, int]:
+        desktop_sizes = pygame.display.get_desktop_sizes()
+        desktop_width, desktop_height = desktop_sizes[0] if desktop_sizes else (
+            cls.WINDOW_W,
+            cls.WINDOW_H,
+        )
+        work_width, work_height = desktop_width, desktop_height
+
+        if sys.platform == "win32":
+            class Rect(ctypes.Structure):
+                _fields_ = [
+                    ("left", ctypes.c_long),
+                    ("top", ctypes.c_long),
+                    ("right", ctypes.c_long),
+                    ("bottom", ctypes.c_long),
+                ]
+
+            work_area = Rect()
+            try:
+                user32 = ctypes.windll.user32
+                if user32.SystemParametersInfoW(0x0030, 0, ctypes.byref(work_area), 0):
+                    work_width = work_area.right - work_area.left
+                    work_height = work_area.bottom - work_area.top
+                else:
+                    work_height = max(1, desktop_height - 48)
+            except (AttributeError, OSError):
+                work_height = max(1, desktop_height - 48)
+
+        width = min(cls.WINDOW_W, max(1, int(work_width * 0.92)))
+        height = min(cls.WINDOW_H, max(1, int(work_height * 0.85)))
+        return width, height
+
+    def _load_sprites(self) -> None:
+        for key, filename in self.ASSET_FILES.items():
+            path = self.asset_dir / filename
+            if not path.is_file():
+                self.sprites[key] = None
+                continue
+            try:
+                self.sprites[key] = pygame.image.load(str(path)).convert_alpha()
+            except (OSError, pygame.error):
+                self.sprites[key] = None
 
     def _build_controllers(self) -> List[object]:
-        ctrls: List[object] = [
+        controllers: List[object] = [
+            HumanController(),
             HeuristicAlphaBetaAgent(max_depth=4, name="Heuristic Alpha-Beta (d=4)"),
             HeuristicMinimaxAgent(max_depth=3, name="Heuristic Minimax (d=3)"),
             AlphaBetaAgent(max_ply_cap=6, name="Pure Alpha-Beta (cap=6)"),
             MinimaxAgent(max_ply_cap=5, name="Pure Minimax (cap=5)"),
-            HumanController(),
         ]
-        external = discover_external_agents()
-        ctrls.extend(external)
-        return ctrls
-
-    def _create_buttons(self) -> List[UIButton]:
-        px = 700
-        return [
-            UIButton(pygame.Rect(px, 68, 390, 32), "Map", "CYCLE_MAP"),
-            UIButton(pygame.Rect(px, 126, 390, 32), "MAX Bot", "CYCLE_MAX"),
-            UIButton(pygame.Rect(px, 184, 390, 32), "MIN Bot", "CYCLE_MIN"),
-            UIButton(pygame.Rect(px, 236, 122, 36), "Play / Pause", "TOGGLE_PLAY"),
-            UIButton(pygame.Rect(px + 134, 236, 122, 36), "Step 1 Turn", "STEP_ONCE"),
-            UIButton(pygame.Rect(px + 268, 236, 122, 36), "Reset Match", "RESET"),
-            UIButton(pygame.Rect(px, 282, 190, 30), "Speed -", "SLOWER"),
-            UIButton(pygame.Rect(px + 200, 282, 190, 30), "Speed +", "FASTER"),
-            UIButton(pygame.Rect(px, 320, 390, 28), "Reload external_agents/*.py", "RELOAD_EXT"),
-        ]
+        controllers.extend(discover_external_agents())
+        return controllers
 
     def reset_match(self) -> None:
         self.state = self.scenarios[self.scenario_idx].builder()
@@ -138,37 +194,38 @@ class TankBattleArenaUI:
         self.auto_play = False
 
     def _active_controller(self, player_id: int) -> object:
-        idx = self.max_ctrl_idx if player_id == PLAYER_MAX else self.min_ctrl_idx
-        return self.controllers[idx % len(self.controllers)]
+        index = self.max_ctrl_idx if player_id == PLAYER_MAX else self.min_ctrl_idx
+        return self.controllers[index % len(self.controllers)]
 
     def execute_turn(self, forced_action: Optional[str] = None) -> None:
         if self.state.is_terminal():
             self.auto_play = False
             return
 
-        pid = self.state.current_player
-        ctrl = self._active_controller(pid)
-
-        if isinstance(ctrl, HumanController):
+        player_id = self.state.current_player
+        controller = self._active_controller(player_id)
+        if isinstance(controller, HumanController):
             if forced_action is None:
                 return
             action = forced_action
+            controller.last_metrics = SearchMetrics(chosen_action=action)
         else:
-            assert isinstance(ctrl, BaseTankAgent)
-            action = ctrl.safe_choose_action(self.state)
+            if not isinstance(controller, BaseTankAgent):
+                raise TypeError(f"Unsupported controller type: {type(controller).__name__}")
+            action = controller.safe_choose_action(self.state)
 
-        next_state, step_ev = TankBattleEngine.step_with_events(self.state, action)
+        next_state, event = TankBattleEngine.step_with_events(self.state, action)
         self.state = next_state
-        self.last_impacts = step_ev.impacts
-        self.anim_frames = list(step_ev.bullet_frames)
+        self.last_impacts = event.impacts
+        self.anim_frames = list(event.bullet_frames)
         self.anim_tick = pygame.time.get_ticks()
 
-        who = "MAX(P1)" if pid == PLAYER_MAX else "MIN(P2)"
-        ms = getattr(ctrl, "last_metrics", SearchMetrics()).elapsed_ms
-        nodes = getattr(ctrl, "last_metrics", SearchMetrics()).explored_states
-        self.action_log.append(f"#{self.state.ply:03d} {who}: {action:<10} ({nodes} st, {ms:.1f}ms)")
-        if len(self.action_log) > 10:
-            self.action_log = self.action_log[-10:]
+        metrics = getattr(controller, "last_metrics", SearchMetrics())
+        side = "MAX" if player_id == PLAYER_MAX else "MIN"
+        self.action_log.append(
+            f"{side}  {action}   {metrics.explored_states:,} nodes   {metrics.elapsed_ms:.1f} ms"
+        )
+        self.action_log = self.action_log[-4:]
 
     def _handle_button(self, action_id: str) -> None:
         if action_id == "CYCLE_MAP":
@@ -191,15 +248,26 @@ class TankBattleArenaUI:
         elif action_id == "FASTER":
             self.step_delay_ms = max(40, self.step_delay_ms - 80)
         elif action_id == "RELOAD_EXT":
+            previous_max = self._active_controller(PLAYER_MAX)
+            previous_min = self._active_controller(PLAYER_MIN)
             self.controllers = self._build_controllers()
-            self.max_ctrl_idx %= len(self.controllers)
-            self.min_ctrl_idx %= len(self.controllers)
+            self.max_ctrl_idx = self._find_controller_index(previous_max)
+            self.min_ctrl_idx = self._find_controller_index(previous_min)
+
+    def _find_controller_index(self, previous: object) -> int:
+        previous_name = getattr(previous, "name", None)
+        for index, controller in enumerate(self.controllers):
+            if controller is previous or (
+                previous_name is not None
+                and getattr(controller, "name", None) == previous_name
+            ):
+                return index
+        return 0
 
     def _handle_human_key(self, key: int) -> None:
-        ctrl = self._active_controller(self.state.current_player)
-        if not isinstance(ctrl, HumanController):
+        if not isinstance(self._active_controller(self.state.current_player), HumanController):
             return
-        key_map: Dict[int, str] = {
+        key_map = {
             pygame.K_w: MOVE_UP,
             pygame.K_UP: MOVE_UP,
             pygame.K_s: MOVE_DOWN,
@@ -211,211 +279,521 @@ class TankBattleArenaUI:
             pygame.K_SPACE: FIRE,
             pygame.K_RETURN: STAY,
         }
-        if key in key_map:
-            self.execute_turn(forced_action=key_map[key])
+        action = key_map.get(key)
+        if action is not None:
+            self.execute_turn(forced_action=action)
 
     def render_frame(self) -> None:
-        self.screen.fill(self.BG_COLOR)
-
-        # Header
-        scen = self.scenarios[self.scenario_idx]
-        header = self.font_title.render(
-            f"TANK BATTLE ARENA  |  {scen.title}  |  Turn {self.state.ply}/{self.state.max_plies}",
-            True,
-            self.TEXT_MAIN,
+        self.buttons.clear()
+        self.screen.fill(self.BG)
+        width, height = self.screen.get_size()
+        right_width = min(440, max(320, int(width * 0.32)))
+        gap = 22
+        margin = 22
+        left_rect = pygame.Rect(
+            margin,
+            margin,
+            max(1, width - right_width - gap - margin * 2),
+            max(1, height - margin * 2),
         )
-        self.screen.blit(header, (self.BOARD_MARGIN_X, 20))
-
-        self._draw_board()
-        self._draw_sidebar()
+        self._draw_board(left_rect)
+        self._draw_sidebar(
+            pygame.Rect(
+                left_rect.right + gap,
+                margin,
+                right_width,
+                max(1, height - margin * 2),
+            )
+        )
         pygame.display.flip()
 
-    def _draw_board(self) -> None:
-        rows, cols = self.state.rows, self.state.cols
-        cell_px = min(self.BOARD_AREA_SIZE // cols, self.BOARD_AREA_SIZE // rows)
-        bw = cell_px * cols
-        bh = cell_px * rows
-        ox = self.BOARD_MARGIN_X + (self.BOARD_AREA_SIZE - bw) // 2
-        oy = self.BOARD_MARGIN_Y + (self.BOARD_AREA_SIZE - bh) // 2
+    def _draw_board(self, area: Optional[pygame.Rect] = None) -> None:
+        if area is None:
+            width, height = self.screen.get_size()
+            panel_width = min(440, max(320, int(width * 0.32)))
+            area = pygame.Rect(22, 22, width - panel_width - 66, height - 44)
 
-        board_rect = pygame.Rect(ox, oy, bw, bh)
-        pygame.draw.rect(self.screen, self.GRID_BG, board_rect, border_radius=4)
+        pygame.draw.rect(self.screen, self.PANEL, area, border_radius=18)
+        pygame.draw.rect(self.screen, self.BORDER, area, width=1, border_radius=18)
 
-        # Grid lines
-        for r in range(rows + 1):
-            y = oy + r * cell_px
-            pygame.draw.line(self.screen, self.GRID_LINE, (ox, y), (ox + bw, y), 1)
-        for c in range(cols + 1):
-            x = ox + c * cell_px
-            pygame.draw.line(self.screen, self.GRID_LINE, (x, oy), (x, oy + bh), 1)
+        title_y = area.y + 16
+        self._draw_text("TANK BATTLE", self.font_title, self.TEXT, (area.x + 22, title_y))
+        scenario = self.scenarios[self.scenario_idx]
+        self._draw_text(
+            f"{scenario.title}   ·   Turn {self.state.ply}/{self.state.max_plies}",
+            self.font_ui,
+            self.MUTED,
+            (area.x + 24, title_y + 32),
+        )
 
-        # Steel walls
-        for r, c in self.state.steel_walls:
-            rect = pygame.Rect(ox + c * cell_px + 3, oy + r * cell_px + 3, cell_px - 6, cell_px - 6)
-            pygame.draw.rect(self.screen, self.STEEL_COLOR, rect, border_radius=3)
-            pygame.draw.rect(self.screen, (205, 215, 228), rect, width=2, border_radius=3)
+        available = pygame.Rect(
+            area.x + 26,
+            area.y + 72,
+            max(1, area.width - 52),
+            max(1, area.height - 98),
+        )
+        self._cell_px = max(
+            1,
+            min(available.width // self.state.cols, available.height // self.state.rows),
+        )
+        board_width = self._cell_px * self.state.cols
+        board_height = self._cell_px * self.state.rows
+        self._board_rect = pygame.Rect(
+            available.centerx - board_width // 2,
+            available.centery - board_height // 2,
+            board_width,
+            board_height,
+        )
+        self._draw_board_cells()
+        self._draw_board_entities()
+        self._draw_projectiles()
+        self._draw_impacts()
+        self._draw_winner_banner()
 
-        # Brick walls with HP indicator
-        for (r, c), wall in self.state.brick_walls.items():
+    def _draw_board_cells(self) -> None:
+        cell = self._cell_px
+        for row in range(self.state.rows):
+            for col in range(self.state.cols):
+                rect = pygame.Rect(
+                    self._board_rect.x + col * cell,
+                    self._board_rect.y + row * cell,
+                    cell,
+                    cell,
+                )
+                sprite_key = "grass_a" if (row + col) % 2 == 0 else "grass_b"
+                sprite = self._get_sprite(sprite_key, (cell, cell))
+                if sprite is None:
+                    shade = (50, 75, 67) if (row + col) % 2 == 0 else (45, 68, 61)
+                    pygame.draw.rect(self.screen, shade, rect)
+                else:
+                    self.screen.blit(sprite, rect)
+                pygame.draw.rect(self.screen, (16, 25, 30), rect, width=1)
+
+    def _draw_board_entities(self) -> None:
+        cell = self._cell_px
+        for row, col in self.state.steel_walls:
+            rect = self._cell_rect(row, col)
+            sprite_rect = rect.inflate(-max(2, cell // 10), -max(2, cell // 10))
+            sprite = self._get_sprite("steel", sprite_rect.size)
+            if sprite is None:
+                pygame.draw.rect(self.screen, self.STEEL, sprite_rect, border_radius=5)
+                pygame.draw.line(self.screen, (225, 233, 241), sprite_rect.topleft, sprite_rect.bottomright, 3)
+                pygame.draw.line(self.screen, (225, 233, 241), sprite_rect.topright, sprite_rect.bottomleft, 3)
+            else:
+                self.screen.blit(sprite, sprite_rect)
+
+        for (row, col), wall in self.state.brick_walls.items():
             if wall.hp <= 0:
                 continue
-            ratio = wall.hp / WALL_INITIAL_HP
-            shade = (
-                int(self.BRICK_COLOR[0] * (0.55 + 0.45 * ratio)),
-                int(self.BRICK_COLOR[1] * (0.55 + 0.45 * ratio)),
-                int(self.BRICK_COLOR[2] * (0.55 + 0.45 * ratio)),
-            )
-            rect = pygame.Rect(ox + c * cell_px + 3, oy + r * cell_px + 3, cell_px - 6, cell_px - 6)
-            pygame.draw.rect(self.screen, shade, rect, border_radius=3)
-            hp_txt = self.font_small.render(str(wall.hp), True, (255, 238, 220))
-            self.screen.blit(hp_txt, hp_txt.get_rect(center=rect.center))
-
-        # Bases
-        for pid, base in self.state.bases.items():
-            color = self.MAX_COLOR if pid == PLAYER_MAX else self.MIN_COLOR
-            rect = pygame.Rect(ox + base.col * cell_px + 5, oy + base.row * cell_px + 5, cell_px - 10, cell_px - 10)
-            if base.hp > 0:
-                pygame.draw.rect(self.screen, color, rect, width=3, border_radius=6)
-                lbl = self.font_ui.render(f"B{pid}:{base.hp}", True, color)
-                self.screen.blit(lbl, lbl.get_rect(center=rect.center))
+            rect = self._cell_rect(row, col)
+            sprite_rect = rect.inflate(-max(2, cell // 10), -max(2, cell // 10))
+            sprite = self._get_sprite("brick", sprite_rect.size)
+            if sprite is None:
+                pygame.draw.rect(self.screen, self.BRICK, sprite_rect, border_radius=5)
+                pygame.draw.rect(self.screen, (226, 176, 128), sprite_rect, width=2, border_radius=5)
             else:
-                pygame.draw.line(self.screen, self.MIN_COLOR, rect.topleft, rect.bottomright, 3)
-                pygame.draw.line(self.screen, self.MIN_COLOR, rect.topright, rect.bottomleft, 3)
+                self.screen.blit(sprite, sprite_rect)
+            self._draw_badge(str(wall.hp), rect.right - 5, rect.top + 5, self.BRICK)
 
-        # Tanks
-        for pid, tank in self.state.tanks.items():
+        for player_id, base in self.state.bases.items():
+            rect = self._cell_rect(base.row, base.col)
+            color = self.BLUE if player_id == PLAYER_MAX else self.RED
+            if base.hp > 0:
+                sprite_rect = rect.inflate(-max(4, cell // 5), -max(4, cell // 5))
+                sprite = self._get_sprite("base", sprite_rect.size)
+                if sprite is None:
+                    pygame.draw.rect(self.screen, (54, 63, 76), sprite_rect, border_radius=7)
+                    pygame.draw.rect(self.screen, color, sprite_rect, width=3, border_radius=7)
+                else:
+                    self.screen.blit(sprite, sprite_rect)
+                    pygame.draw.rect(self.screen, color, sprite_rect, width=2, border_radius=5)
+                self._draw_badge(f"B{player_id}", rect.centerx, rect.bottom - 4, color)
+            else:
+                pygame.draw.line(self.screen, self.RED, rect.topleft, rect.bottomright, 4)
+                pygame.draw.line(self.screen, self.RED, rect.topright, rect.bottomleft, 4)
+
+        for player_id, tank in self.state.tanks.items():
             if tank.hp <= 0:
                 continue
-            color = self.MAX_COLOR if pid == PLAYER_MAX else self.MIN_COLOR
-            cx = ox + tank.col * cell_px + cell_px // 2
-            cy = oy + tank.row * cell_px + cell_px // 2
-            body_r = max(10, cell_px // 3)
-            pygame.draw.circle(self.screen, color, (cx, cy), body_r)
-            pygame.draw.circle(self.screen, (245, 248, 255), (cx, cy), body_r, 2)
+            rect = self._cell_rect(tank.row, tank.col)
+            color = self.BLUE if player_id == PLAYER_MAX else self.RED
+            size = max(8, int(cell * 0.82))
+            sprite = self._get_sprite(
+                "tank_max" if player_id == PLAYER_MAX else "tank_min",
+                (size, size),
+                self.DIRECTION_ANGLE[tank.facing],
+            )
+            tank_rect = pygame.Rect(0, 0, size, size)
+            tank_rect.center = rect.center
+            if sprite is None:
+                self._draw_fallback_tank(tank_rect, color, tank.facing)
+            else:
+                self.screen.blit(sprite, tank_rect)
+            self._draw_hp_bar(
+                pygame.Rect(rect.x + 4, rect.bottom - 8, max(1, cell - 8), 4),
+                tank.hp,
+                TANK_INITIAL_HP,
+                color,
+            )
 
-            # Gun barrel showing facing direction
-            barrel_len = int(cell_px * 0.44)
-            end_pos = {
-                DIR_UP: (cx, cy - barrel_len),
-                DIR_DOWN: (cx, cy + barrel_len),
-                DIR_LEFT: (cx - barrel_len, cy),
-                DIR_RIGHT: (cx + barrel_len, cy),
-            }[tank.facing]
-            pygame.draw.line(self.screen, (250, 250, 250), (cx, cy), end_pos, 4)
-
-            # Mini HP bar above tank
-            bar_w = cell_px - 10
-            bx = ox + tank.col * cell_px + 5
-            by = oy + tank.row * cell_px + 3
-            pygame.draw.rect(self.screen, (50, 55, 65), (bx, by, bar_w, 5))
-            fill_w = int(bar_w * max(0.0, tank.hp / TANK_INITIAL_HP))
-            pygame.draw.rect(self.screen, self.ACCENT_GREEN, (bx, by, fill_w, 5))
-
-        # Active bullets (or animated sub-step frame)
-        bullets_to_draw = [
-            (b.owner_id, b.row, b.col, b.direction) for b in self.state.bullets if b.active
+    def _draw_projectiles(self) -> None:
+        bullets = [
+            (bullet.owner_id, bullet.row, bullet.col, bullet.direction)
+            for bullet in self.state.bullets
         ]
         if self.anim_frames:
-            elapsed = pygame.time.get_ticks() - self.anim_tick
-            frame_idx = elapsed // 60
-            if frame_idx < len(self.anim_frames):
-                bullets_to_draw = self.anim_frames[frame_idx]
+            frame_index = (pygame.time.get_ticks() - self.anim_tick) // 55
+            if frame_index < len(self.anim_frames):
+                bullets = self.anim_frames[frame_index]
             else:
                 self.anim_frames.clear()
 
-        for owner_id, br, bc, _ in bullets_to_draw:
-            bx = ox + bc * cell_px + cell_px // 2
-            by = oy + br * cell_px + cell_px // 2
-            pygame.draw.circle(self.screen, self.BULLET_COLOR, (bx, by), max(5, cell_px // 7))
-            ring_col = self.MAX_COLOR if owner_id == PLAYER_MAX else self.MIN_COLOR
-            pygame.draw.circle(self.screen, ring_col, (bx, by), max(7, cell_px // 5), 2)
+        for owner_id, row, col, direction in bullets:
+            cell_rect = self._cell_rect(row, col)
+            width = max(5, int(self._cell_px * 0.22))
+            height = max(9, int(self._cell_px * 0.48))
+            key = "bullet_max" if owner_id == PLAYER_MAX else "bullet_min"
+            sprite = self._get_sprite(
+                key,
+                (width, height),
+                self.DIRECTION_ANGLE[direction],
+            )
+            if sprite is None:
+                self._draw_fallback_bullet(cell_rect.center, direction, owner_id)
+            else:
+                destination = sprite.get_rect(center=cell_rect.center)
+                self.screen.blit(sprite, destination)
 
-        # Impact flash markers
-        for ir, ic, _ in self.last_impacts:
-            ix = ox + ic * cell_px + cell_px // 2
-            iy = oy + ir * cell_px + cell_px // 2
-            pygame.draw.circle(self.screen, (255, 140, 50), (ix, iy), max(8, cell_px // 4), 2)
+    def _draw_impacts(self) -> None:
+        for row, col, _ in self.last_impacts:
+            center = self._cell_rect(row, col).center
+            radius = max(6, self._cell_px // 4)
+            pygame.draw.circle(self.screen, self.GOLD, center, radius, width=2)
 
-        # Winner banner overlay
+    def _draw_winner_banner(self) -> None:
         winner = self.state.winner()
-        if winner is not None:
-            banner = pygame.Rect(ox + 40, oy + bh // 2 - 34, bw - 80, 68)
-            pygame.draw.rect(self.screen, (15, 20, 28), banner, border_radius=8)
-            pygame.draw.rect(self.screen, self.BULLET_COLOR, banner, width=2, border_radius=8)
-            msg = (
-                "MATCH RESULT: DRAW"
-                if winner == 0
-                else f"WINNER: {'PLAYER 1 (MAX - BLUE)' if winner == PLAYER_MAX else 'PLAYER 2 (MIN - RED)'}!"
+        if winner is None:
+            return
+        banner = pygame.Rect(0, 0, min(self._board_rect.width - 24, 390), 68)
+        banner.center = self._board_rect.center
+        pygame.draw.rect(self.screen, (18, 23, 31), banner, border_radius=12)
+        pygame.draw.rect(self.screen, self.GOLD, banner, width=2, border_radius=12)
+        if winner == 0:
+            message = "MATCH DRAW"
+        else:
+            message = f"{'MAX' if winner == PLAYER_MAX else 'MIN'} WINS"
+        self._draw_text(
+            message,
+            self.font_title,
+            self.GOLD,
+            (banner.centerx, banner.centery),
+            center=True,
+        )
+
+    def _draw_sidebar(self, panel: Optional[pygame.Rect] = None) -> None:
+        if panel is None:
+            width, height = self.screen.get_size()
+            panel_width = min(440, max(320, int(width * 0.32)))
+            panel = pygame.Rect(width - panel_width - 22, 22, panel_width, height - 44)
+        pygame.draw.rect(self.screen, self.PANEL, panel, border_radius=18)
+        pygame.draw.rect(self.screen, self.BORDER, panel, width=1, border_radius=18)
+
+        scale = min(1.0, max(0.72, panel.height / 680))
+        x = panel.x + 18
+        width = panel.width - 36
+        y = panel.y + 16
+        self._draw_text("MATCH CONTROL", self.font_heading, self.TEXT, (x, y))
+        self._draw_text(
+            "Choose a map and one controller per side",
+            self.font_small,
+            self.MUTED,
+            (x, y + 22),
+        )
+
+        y += int(52 * scale)
+        self._draw_text("MAP", self.font_small, self.MUTED, (x, y))
+        self._add_button(
+            pygame.Rect(x, y + 16, width, max(29, int(34 * scale))),
+            self.scenarios[self.scenario_idx].title,
+            "CYCLE_MAP",
+        )
+
+        y += int(57 * scale)
+        half = (width - 10) // 2
+        for player_id, action_id, color in (
+            (PLAYER_MAX, "CYCLE_MAX", self.BLUE),
+            (PLAYER_MIN, "CYCLE_MIN", self.RED),
+        ):
+            button_x = x if player_id == PLAYER_MAX else x + half + 10
+            controller = self._active_controller(player_id)
+            self._add_button(
+                pygame.Rect(button_x, y, half, max(32, int(38 * scale))),
+                f"{'MAX' if player_id == PLAYER_MAX else 'MIN'} · {self._display_controller_name(controller)}",
+                action_id,
+                highlighted=isinstance(controller, HumanController),
             )
-            txt = self.font_title.render(msg, True, self.BULLET_COLOR)
-            self.screen.blit(txt, txt.get_rect(center=banner.center))
 
-    def _draw_sidebar(self) -> None:
-        panel = pygame.Rect(686, 20, 416, 700)
-        pygame.draw.rect(self.screen, self.PANEL_BG, panel, border_radius=8)
-        pygame.draw.rect(self.screen, self.PANEL_BORDER, panel, width=1, border_radius=8)
+        y += int(46 * scale)
+        button_gap = 8
+        button_width = (width - button_gap * 2) // 3
+        self._add_button(
+            pygame.Rect(x, y, button_width, max(29, int(32 * scale))),
+            "Pause" if self.auto_play else "Play",
+            "TOGGLE_PLAY",
+            highlighted=self.auto_play,
+        )
+        self._add_button(
+            pygame.Rect(x + button_width + button_gap, y, button_width, max(29, int(32 * scale))),
+            "Step",
+            "STEP_ONCE",
+        )
+        self._add_button(
+            pygame.Rect(x + (button_width + button_gap) * 2, y, button_width, max(29, int(32 * scale))),
+            "Reset",
+            "RESET",
+        )
 
-        title = self.font_ui.render("MATCH CONFIGURATION & CONTROLS", True, self.TEXT_MAIN)
-        self.screen.blit(title, (700, 34))
+        y += int(39 * scale)
+        self._draw_text(f"{self.step_delay_ms} ms / turn", self.font_small, self.MUTED, (x, y + 3))
+        reload_width = 88
+        speed_x = panel.right - 18 - reload_width - 8 - 86
+        self._add_button(pygame.Rect(speed_x, y, 39, 25), "−", "SLOWER")
+        self._add_button(
+            pygame.Rect(speed_x + 45, y, 39, 25),
+            "+",
+            "FASTER",
+        )
+        self._add_button(
+            pygame.Rect(panel.right - 18 - reload_width, y, reload_width, 25),
+            "Reload bots",
+            "RELOAD_EXT",
+        )
 
-        scen = self.scenarios[self.scenario_idx]
-        max_ctrl = self._active_controller(PLAYER_MAX)
-        min_ctrl = self._active_controller(PLAYER_MIN)
+        y += int(33 * scale)
+        self._draw_text("UNIT STATUS", self.font_small, self.MUTED, (x, y))
+        y += 16
+        for player_id, color, label in (
+            (PLAYER_MAX, self.BLUE, "MAX"),
+            (PLAYER_MIN, self.RED, "MIN"),
+        ):
+            tank = self.state.tanks[player_id]
+            base = self.state.bases[player_id]
+            self._draw_text(f"{label} · T", self.font_small, color, (x, y))
+            self._draw_hp_bar(pygame.Rect(x + 49, y + 2, max(24, int(width * 0.50)), 8), tank.hp, TANK_INITIAL_HP, color)
+            self._draw_text(f"{tank.hp}/{TANK_INITIAL_HP}", self.font_small, self.TEXT, (x + int(width * 0.72), y - 1))
+            self._draw_text("Base", self.font_small, self.MUTED, (x, y + 17))
+            self._draw_hp_bar(pygame.Rect(x + 49, y + 19, max(24, int(width * 0.50)), 8), base.hp, BASE_INITIAL_HP, color)
+            self._draw_text(f"{base.hp}/{BASE_INITIAL_HP}", self.font_small, self.TEXT, (x + int(width * 0.72), y + 16))
+            y += int(39 * scale)
 
-        # Selector labels
-        self.screen.blit(self.font_small.render("Scenario (click button to switch):", True, self.TEXT_MUTED), (700, 52))
-        self.screen.blit(self.font_small.render("Player 1 - MAX (Blue Tank):", True, self.MAX_COLOR), (700, 108))
-        self.screen.blit(self.font_small.render("Player 2 - MIN (Red Tank):", True, self.MIN_COLOR), (700, 166))
+        y += 1
+        self._draw_text("SEARCH TELEMETRY", self.font_small, self.MUTED, (x, y))
+        y += 16
+        for player_id, color, label in (
+            (PLAYER_MAX, self.BLUE, "MAX"),
+            (PLAYER_MIN, self.RED, "MIN"),
+        ):
+            controller = self._active_controller(player_id)
+            metrics = getattr(controller, "last_metrics", SearchMetrics())
+            card_height = max(53, int(53 * scale))
+            card = pygame.Rect(x, y, width, card_height)
+            pygame.draw.rect(self.screen, self.PANEL_ALT, card, border_radius=10)
+            pygame.draw.rect(self.screen, self.BORDER, card, width=1, border_radius=10)
+            self._draw_text(
+                f"{label}  {self._controller_name(controller)}",
+                self.font_small,
+                color,
+                (card.x + 9, card.y + 5),
+                max_width=card.width - 20,
+            )
+            self._draw_text(
+                f"{metrics.chosen_action} · d{metrics.depth_reached} · {metrics.elapsed_ms:.1f} ms",
+                self.font_mono,
+                self.TEXT,
+                (card.x + 9, card.y + 22),
+                max_width=card.width - 20,
+            )
+            self._draw_text(
+                f"{metrics.explored_states:,} nodes · {metrics.pruned_branches} cut · TT {metrics.tt_hits}",
+                self.font_mono,
+                self.MUTED,
+                (card.x + 9, card.y + 37),
+                max_width=card.width - 20,
+            )
+            y += max(card_height + 4, int(59 * scale))
 
-        dynamic_labels = {
-            "CYCLE_MAP": f"Map: {scen.title}",
-            "CYCLE_MAX": f"MAX: {getattr(max_ctrl, 'name', 'Bot')}",
-            "CYCLE_MIN": f"MIN: {getattr(min_ctrl, 'name', 'Bot')}",
-            "TOGGLE_PLAY": "Pause" if self.auto_play else "Auto Play",
+        if panel.height >= 700 and y + 68 < panel.bottom - 8:
+            self._draw_text("RECENT ACTIONS", self.font_small, self.MUTED, (x, y))
+            y += 18
+            for message in self.action_log[-3:]:
+                self._draw_text(
+                    message,
+                    self.font_small,
+                    self.TEXT,
+                    (x, y),
+                    max_width=width,
+                )
+                y += 17
+
+        hint_y = panel.bottom - 20
+        is_human_turn = isinstance(
+            self._active_controller(self.state.current_player),
+            HumanController,
+        )
+        self._draw_text(
+            "WASD/arrows · Space fire" if is_human_turn else "ESC to quit",
+            self.font_small,
+            self.GOLD if is_human_turn else self.MUTED,
+            (x, hint_y),
+            max_width=width,
+        )
+
+    def _draw_hp_bar(
+        self,
+        rect: pygame.Rect,
+        current: int,
+        maximum: int,
+        color: Tuple[int, int, int],
+    ) -> None:
+        pygame.draw.rect(self.screen, (52, 61, 75), rect, border_radius=max(2, rect.height // 2))
+        ratio = max(0.0, min(1.0, current / maximum)) if maximum else 0.0
+        fill = rect.copy()
+        fill.width = int(rect.width * ratio)
+        if fill.width > 0:
+            pygame.draw.rect(self.screen, color, fill, border_radius=max(2, rect.height // 2))
+
+    def _draw_badge(
+        self,
+        label: str,
+        x: int,
+        y: int,
+        color: Tuple[int, int, int],
+    ) -> None:
+        text = self.font_small.render(label, True, self.TEXT)
+        badge = pygame.Rect(0, 0, text.get_width() + 10, text.get_height() + 5)
+        badge.center = (x, y)
+        pygame.draw.rect(self.screen, color, badge, border_radius=5)
+        self.screen.blit(text, text.get_rect(center=badge.center))
+
+    def _draw_fallback_tank(
+        self,
+        rect: pygame.Rect,
+        color: Tuple[int, int, int],
+        direction: str,
+    ) -> None:
+        pygame.draw.rect(self.screen, color, rect.inflate(-rect.width // 5, -rect.height // 5), border_radius=8)
+        center = rect.center
+        length = max(6, min(rect.width, rect.height) // 2)
+        endpoint = {
+            DIR_UP: (center[0], center[1] - length),
+            DIR_DOWN: (center[0], center[1] + length),
+            DIR_LEFT: (center[0] - length, center[1]),
+            DIR_RIGHT: (center[0] + length, center[1]),
+        }[direction]
+        pygame.draw.line(self.screen, self.TEXT, center, endpoint, max(2, rect.width // 7))
+
+    def _draw_fallback_bullet(
+        self,
+        center: Tuple[int, int],
+        direction: str,
+        owner_id: int,
+    ) -> None:
+        color = self.BLUE if owner_id == PLAYER_MAX else self.RED
+        delta = {
+            DIR_UP: (0, -1),
+            DIR_DOWN: (0, 1),
+            DIR_LEFT: (-1, 0),
+            DIR_RIGHT: (1, 0),
+        }[direction]
+        end = (
+            center[0] + delta[0] * max(5, self._cell_px // 4),
+            center[1] + delta[1] * max(5, self._cell_px // 4),
+        )
+        pygame.draw.line(self.screen, color, center, end, max(3, self._cell_px // 8))
+        pygame.draw.circle(self.screen, self.GOLD, end, max(2, self._cell_px // 12))
+
+    def _get_sprite(
+        self,
+        key: str,
+        size: Tuple[int, int],
+        angle: int = 0,
+    ) -> Optional[pygame.Surface]:
+        source = self.sprites.get(key)
+        if source is None or size[0] <= 0 or size[1] <= 0:
+            return None
+        cache_key = (key, size[0], size[1], angle)
+        cached = self._sprite_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        scaled = pygame.transform.smoothscale(source, size)
+        rotated = pygame.transform.rotate(scaled, angle) if angle else scaled
+        self._sprite_cache[cache_key] = rotated
+        return rotated
+
+    def _cell_rect(self, row: int, col: int) -> pygame.Rect:
+        return pygame.Rect(
+            self._board_rect.x + col * self._cell_px,
+            self._board_rect.y + row * self._cell_px,
+            self._cell_px,
+            self._cell_px,
+        )
+
+    def _add_button(
+        self,
+        rect: pygame.Rect,
+        label: str,
+        action_id: str,
+        highlighted: bool = False,
+    ) -> None:
+        self.buttons.append(UIButton(rect, label, action_id))
+        background = (45, 91, 137) if highlighted else self.PANEL_ALT
+        pygame.draw.rect(self.screen, background, rect, border_radius=8)
+        pygame.draw.rect(self.screen, self.BORDER, rect, width=1, border_radius=8)
+        self._draw_text(
+            label,
+            self.font_ui,
+            self.TEXT,
+            rect.center,
+            center=True,
+            max_width=rect.width - 14,
+        )
+
+    def _draw_text(
+        self,
+        text: str,
+        font: pygame.font.Font,
+        color: Tuple[int, int, int],
+        position: Tuple[int, int],
+        center: bool = False,
+        max_width: Optional[int] = None,
+    ) -> None:
+        display_text = text
+        if max_width is not None:
+            while display_text and font.size(display_text)[0] > max_width:
+                display_text = display_text[:-2].rstrip() + "…"
+        surface = font.render(display_text, True, color)
+        destination = surface.get_rect()
+        if center:
+            destination.center = position
+        else:
+            destination.topleft = position
+        self.screen.blit(surface, destination)
+
+    @staticmethod
+    def _controller_name(controller: object) -> str:
+        name = getattr(controller, "name", type(controller).__name__)
+        return str(name)
+
+    @classmethod
+    def _display_controller_name(cls, controller: object) -> str:
+        name = cls._controller_name(controller)
+        aliases = {
+            "Heuristic Alpha-Beta (d=4)": "Heuristic AB d4",
+            "Heuristic Minimax (d=3)": "Heuristic Minimax d3",
+            "Pure Alpha-Beta (cap=6)": "Alpha-Beta cap6",
+            "Pure Minimax (cap=5)": "Minimax cap5",
         }
-
-        for btn in self.buttons:
-            bg = (48, 92, 148) if (btn.action_id == "TOGGLE_PLAY" and self.auto_play) else (40, 48, 66)
-            pygame.draw.rect(self.screen, bg, btn.rect, border_radius=5)
-            pygame.draw.rect(self.screen, self.PANEL_BORDER, btn.rect, width=1, border_radius=5)
-            text = dynamic_labels.get(btn.action_id, btn.label)
-            surf = self.font_small.render(text, True, self.TEXT_MAIN)
-            self.screen.blit(surf, surf.get_rect(center=btn.rect.center))
-
-        # Status & HP Telemetry
-        y = 360
-        t1, t2 = self.state.tanks[PLAYER_MAX], self.state.tanks[PLAYER_MIN]
-        b1, b2 = self.state.bases[PLAYER_MAX], self.state.bases[PLAYER_MIN]
-        turn_lbl = "MAX (Blue)" if self.state.current_player == PLAYER_MAX else "MIN (Red)"
-        info_lines = [
-            f"Active Turn : {turn_lbl}   |   Delay: {self.step_delay_ms} ms",
-            f"MAX Status  : Tank HP {t1.hp}/{TANK_INITIAL_HP} ({t1.facing}) | Base HP {b1.hp}/{BASE_INITIAL_HP}",
-            f"MIN Status  : Tank HP {t2.hp}/{TANK_INITIAL_HP} ({t2.facing}) | Base HP {b2.hp}/{BASE_INITIAL_HP}",
-        ]
-        for line in info_lines:
-            self.screen.blit(self.font_mono.render(line, True, self.TEXT_MAIN), (700, y))
-            y += 20
-
-        # Search Telemetry for both agents
-        y += 8
-        self.screen.blit(self.font_ui.render("SEARCH TELEMETRY (LAST DECISION)", True, self.ACCENT_GREEN), (700, y))
-        y += 22
-        for tag, ctrl, col in (("MAX", max_ctrl, self.MAX_COLOR), ("MIN", min_ctrl, self.MIN_COLOR)):
-            m: SearchMetrics = getattr(ctrl, "last_metrics", SearchMetrics())
-            line = (
-                f"{tag}: act={m.chosen_action:<10} d={m.depth_reached} "
-                f"nodes={m.explored_states:<5} t={m.elapsed_ms:.1f}ms"
-            )
-            self.screen.blit(self.font_mono.render(line, True, col), (700, y))
-            y += 19
-
-        # Recent Action Log
-        y += 10
-        self.screen.blit(self.font_ui.render("ACTION & COLLISION LOG", True, self.TEXT_MAIN), (700, y))
-        y += 22
-        for entry in self.action_log:
-            self.screen.blit(self.font_mono.render(entry, True, self.TEXT_MUTED), (700, y))
-            y += 17
+        return aliases.get(name, name)
 
     def save_screenshot(self, path: Path) -> None:
         self.render_frame()
@@ -429,10 +807,12 @@ class TankBattleArenaUI:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen = pygame.display.set_mode(event.size, pygame.RESIZABLE)
                 elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    for btn in self.buttons:
-                        if btn.rect.collidepoint(event.pos):
-                            self._handle_button(btn.action_id)
+                    for button in self.buttons:
+                        if button.rect.collidepoint(event.pos):
+                            self._handle_button(button.action_id)
                             break
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
@@ -442,11 +822,12 @@ class TankBattleArenaUI:
 
             if self.auto_play and not self.state.is_terminal():
                 active = self._active_controller(self.state.current_player)
-                if not isinstance(active, HumanController) and (now - self.last_step_tick >= self.step_delay_ms):
+                if isinstance(active, HumanController):
+                    self.auto_play = False
+                elif now - self.last_step_tick >= self.step_delay_ms:
                     self.execute_turn()
                     self.last_step_tick = pygame.time.get_ticks()
 
             self.render_frame()
             self.clock.tick(30)
-
         pygame.quit()

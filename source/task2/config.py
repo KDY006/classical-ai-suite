@@ -1,22 +1,21 @@
-"""Core constants, actions, directions, and entity specifications for Tank Battle."""
+"""Rules shared by the Tank Battle engine, agents, and user interface."""
 
 from __future__ import annotations
 
-from typing import Dict, Tuple
+from typing import Dict, Final, Tuple
 
-# Players in the Zero-Sum Game
-PLAYER_MAX: int = 1
-PLAYER_MIN: int = 2
+PLAYER_MAX: Final[int] = 1
+PLAYER_MIN: Final[int] = 2
+PLAYER_IDS: Final[Tuple[int, int]] = (PLAYER_MAX, PLAYER_MIN)
 
-# Six discrete tank actions defined in the specification
-MOVE_UP: str = "MOVE_UP"
-MOVE_DOWN: str = "MOVE_DOWN"
-MOVE_LEFT: str = "MOVE_LEFT"
-MOVE_RIGHT: str = "MOVE_RIGHT"
-FIRE: str = "FIRE"
-STAY: str = "STAY"
+MOVE_UP: Final[str] = "MOVE_UP"
+MOVE_DOWN: Final[str] = "MOVE_DOWN"
+MOVE_LEFT: Final[str] = "MOVE_LEFT"
+MOVE_RIGHT: Final[str] = "MOVE_RIGHT"
+FIRE: Final[str] = "FIRE"
+STAY: Final[str] = "STAY"
 
-ALL_ACTIONS: Tuple[str, ...] = (
+ALL_ACTIONS: Final[Tuple[str, ...]] = (
     MOVE_UP,
     MOVE_DOWN,
     MOVE_LEFT,
@@ -25,34 +24,32 @@ ALL_ACTIONS: Tuple[str, ...] = (
     STAY,
 )
 
-# Directional vectors (d_row, d_col)
-DIR_UP: str = "UP"
-DIR_DOWN: str = "DOWN"
-DIR_LEFT: str = "LEFT"
-DIR_RIGHT: str = "RIGHT"
+DIR_UP: Final[str] = "UP"
+DIR_DOWN: Final[str] = "DOWN"
+DIR_LEFT: Final[str] = "LEFT"
+DIR_RIGHT: Final[str] = "RIGHT"
+DIRECTIONS: Final[Tuple[str, ...]] = (DIR_UP, DIR_DOWN, DIR_LEFT, DIR_RIGHT)
 
-DIRECTION_DELTAS: Dict[str, Tuple[int, int]] = {
+DIRECTION_DELTAS: Final[Dict[str, Tuple[int, int]]] = {
     DIR_UP: (-1, 0),
     DIR_DOWN: (1, 0),
     DIR_LEFT: (0, -1),
     DIR_RIGHT: (0, 1),
 }
 
-MOVE_ACTION_TO_DIR: Dict[str, str] = {
+MOVE_ACTION_TO_DIR: Final[Dict[str, str]] = {
     MOVE_UP: DIR_UP,
     MOVE_DOWN: DIR_DOWN,
     MOVE_LEFT: DIR_LEFT,
     MOVE_RIGHT: DIR_RIGHT,
 }
 
-# Predefined entity health and combat parameters from Task 2 specification table
-TANK_INITIAL_HP: int = 6
-BASE_INITIAL_HP: int = 9
-WALL_INITIAL_HP: int = 3
-DAMAGE_PER_HIT: int = 1
-BULLET_SPEED_PER_CYCLE: int = 3
+TANK_INITIAL_HP: Final[int] = 6
+BASE_INITIAL_HP: Final[int] = 9
+WALL_INITIAL_HP: Final[int] = 3
+DAMAGE_PER_HIT: Final[int] = 1
+BULLET_SPEED_PER_CYCLE: Final[int] = 3
 
-# Zero-Sum terminal utility values
-WIN_UTILITY: float = 1000.0
-LOSS_UTILITY: float = -1000.0
-DRAW_UTILITY: float = 0.0
+WIN_UTILITY: Final[float] = 1000.0
+LOSS_UTILITY: Final[float] = -1000.0
+DRAW_UTILITY: Final[float] = 0.0

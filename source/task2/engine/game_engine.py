@@ -1,184 +1,260 @@
-"""Transition model RESULT(s, a) with cell-by-cell 3-step bullet collision physics."""
+"""Pure state transitions and deterministic cell-by-cell projectile collisions."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from dataclasses import dataclass, field, replace
+from typing import Dict, List, Optional, Tuple
 
 from ..config import (
+    ALL_ACTIONS,
     BULLET_SPEED_PER_CYCLE,
     DAMAGE_PER_HIT,
     DIRECTION_DELTAS,
     FIRE,
     MOVE_ACTION_TO_DIR,
+    PLAYER_MAX,
+    PLAYER_MIN,
     STAY,
 )
-from .entities import Bullet
+from .entities import Base, BrickWall, Bullet, Tank
 from .game_state import GameState
+
+BulletFrame = Tuple[int, int, int, str]
+Impact = Tuple[int, int, str]
 
 
 @dataclass
 class StepEvent:
-    """Granular animation and collision metadata emitted during a single turn."""
+    """Animation data for a completed action and its projectile substeps."""
 
     player_id: int
     action: str
-    bullet_frames: List[List[Tuple[int, int, int, str]]] = field(default_factory=list)
-    impacts: List[Tuple[int, int, str]] = field(default_factory=list)
+    bullet_frames: List[List[BulletFrame]] = field(default_factory=list)
+    impacts: List[Impact] = field(default_factory=list)
 
 
 class TankBattleEngine:
-    """Stateless transition engine implementing RESULT(s, a) for Tank Battle."""
+    """Stateless transition engine implementing RESULT(state, action)."""
 
     @classmethod
     def apply_action(cls, state: GameState, action: str) -> GameState:
-        """Compute next state s' = RESULT(s, a) without mutating ``state``."""
-        next_state = state.clone()
-        cls._step_in_place(next_state, action, record_events=False)
+        """Return the next immutable state without changing ``state``."""
+        next_state, _ = cls._transition(state, action, record_events=False)
         return next_state
 
     @classmethod
-    def step_with_events(cls, state: GameState, action: str) -> Tuple[GameState, StepEvent]:
-        """Compute next state s' plus cell-by-cell bullet trajectory frames for PyGame UI."""
-        next_state = state.clone()
-        event = cls._step_in_place(next_state, action, record_events=True)
-        assert event is not None
+    def step_with_events(cls, state: GameState, action: str) -> tuple[GameState, StepEvent]:
+        """Return the next state and per-cell projectile animation events."""
+        next_state, event = cls._transition(state, action, record_events=True)
+        if event is None:
+            raise RuntimeError("Event recording did not produce a StepEvent.")
         return next_state, event
 
     @classmethod
-    def _step_in_place(
+    def _transition(
         cls,
         state: GameState,
         action: str,
-        record_events: bool = False,
-    ) -> Optional[StepEvent]:
-        pid = state.current_player
-        tank = state.tanks[pid]
-        event = StepEvent(player_id=pid, action=action) if record_events else None
+        record_events: bool,
+    ) -> tuple[GameState, Optional[StepEvent]]:
+        if action not in ALL_ACTIONS:
+            raise ValueError(f"Unknown action: {action!r}")
 
+        player_id = state.current_player
+        event = StepEvent(player_id=player_id, action=action) if record_events else None
         if state.is_terminal():
-            return event
+            return state, event
 
-        # 1. Execute tank action (movement/rotation, firing, or staying)
+        tanks: Dict[int, Tank] = dict(state.tanks)
+        bases: Dict[int, Base] = dict(state.bases)
+        brick_walls: Dict[tuple[int, int], BrickWall] = dict(state.brick_walls)
+        bullets: List[Bullet] = list(state.bullets)
+        steel_walls = state.steel_walls
+        tank = tanks[player_id]
+
         if action in MOVE_ACTION_TO_DIR:
             direction = MOVE_ACTION_TO_DIR[action]
-            tank.facing = direction
             dr, dc = DIRECTION_DELTAS[direction]
-            nr, nc = tank.row + dr, tank.col + dc
-            if state.is_cell_walkable(nr, nc):
-                tank.row, tank.col = nr, nc
-                # Check if tank stepped directly into an active enemy projectile
-                for b in state.bullets:
-                    if b.active and b.row == nr and b.col == nc and b.owner_id != pid:
-                        tank.take_damage(DAMAGE_PER_HIT)
-                        b.active = False
+            destination = (tank.row + dr, tank.col + dc)
+            tank = replace(tank, facing=direction)
+            if cls._is_walkable(
+                destination[0],
+                destination[1],
+                state.rows,
+                state.cols,
+                tanks,
+                bases,
+                brick_walls,
+                steel_walls,
+            ):
+                tank = replace(tank, row=destination[0], col=destination[1])
+                for index, bullet in enumerate(bullets):
+                    if (
+                        bullet.owner_id != player_id
+                        and (bullet.row, bullet.col) == destination
+                    ):
+                        tank, _ = tank.damaged(DAMAGE_PER_HIT)
+                        bullets[index] = replace(bullet, active=False)
                         if event is not None:
-                            event.impacts.append((nr, nc, "TANK"))
+                            event.impacts.append((destination[0], destination[1], "TANK"))
                         break
-
-        elif action == FIRE:
-            if not state.has_active_bullet(pid):
-                state.bullets.append(
-                    Bullet(
-                        owner_id=pid,
-                        row=tank.row,
-                        col=tank.col,
-                        direction=tank.facing,
-                        active=True,
-                    )
+            tanks[player_id] = tank
+        elif action == FIRE and not any(b.owner_id == player_id for b in bullets):
+            bullets.append(
+                Bullet(
+                    owner_id=player_id,
+                    row=tank.row,
+                    col=tank.col,
+                    direction=tank.facing,
                 )
+            )
         elif action == STAY:
             pass
 
-        # 2. Process active bullets belonging to current player for this cycle:
-        #    Each bullet advances up to 3 cells, checked cell-by-cell.
-        if not state.is_terminal():
-            for step_idx in range(BULLET_SPEED_PER_CYCLE):
-                any_moved = False
-                for bullet in state.bullets:
-                    if not bullet.active or bullet.owner_id != pid:
+        if not cls._is_combat_terminal(tanks, bases):
+            for _ in range(BULLET_SPEED_PER_CYCLE):
+                moved_any = False
+                for index, bullet in enumerate(bullets):
+                    if not bullet.active or bullet.owner_id != player_id:
                         continue
-                    any_moved = True
-                    cls._advance_bullet_one_cell(state, bullet, event)
-                    if state.is_terminal():
+                    moved_any = True
+                    cls._advance_bullet_one_cell(
+                        index,
+                        bullets,
+                        tanks,
+                        bases,
+                        brick_walls,
+                        steel_walls,
+                        state.rows,
+                        state.cols,
+                        event,
+                    )
+                    if cls._is_combat_terminal(tanks, bases):
                         break
-                if event is not None and any_moved:
-                    snapshot = [
-                        (b.owner_id, b.row, b.col, b.direction)
-                        for b in state.bullets
-                        if b.active
-                    ]
-                    event.bullet_frames.append(snapshot)
-                if state.is_terminal() or not any_moved:
+
+                if event is not None and moved_any:
+                    event.bullet_frames.append(
+                        [
+                            (bullet.owner_id, bullet.row, bullet.col, bullet.direction)
+                            for bullet in bullets
+                            if bullet.active
+                        ]
+                    )
+                if not moved_any or cls._is_combat_terminal(tanks, bases):
                     break
 
-        # Remove inactive bullets and destroyed brick walls
-        state.bullets = [b for b in state.bullets if b.active]
-        dead_walls = [pos for pos, w in state.brick_walls.items() if w.hp <= 0]
-        for pos in dead_walls:
-            del state.brick_walls[pos]
+        next_state = GameState(
+            rows=state.rows,
+            cols=state.cols,
+            tanks=tanks,
+            bases=bases,
+            brick_walls={
+                position: wall for position, wall in brick_walls.items() if wall.hp > 0
+            },
+            steel_walls=steel_walls,
+            bullets=(bullet for bullet in bullets if bullet.active),
+            current_player=GameState.opponent(player_id),
+            ply=state.ply + 1,
+            max_plies=state.max_plies,
+        )
+        return next_state, event
 
-        # Advance turn counter and switch active player
-        state.ply += 1
-        state.current_player = GameState.opponent(pid)
-        return event
+    @staticmethod
+    def _is_walkable(
+        row: int,
+        col: int,
+        rows: int,
+        cols: int,
+        tanks: Dict[int, Tank],
+        bases: Dict[int, Base],
+        brick_walls: Dict[tuple[int, int], BrickWall],
+        steel_walls: frozenset[tuple[int, int]],
+    ) -> bool:
+        if not (0 <= row < rows and 0 <= col < cols) or (row, col) in steel_walls:
+            return False
+        wall = brick_walls.get((row, col))
+        if wall is not None and wall.hp > 0:
+            return False
+        if any(base.hp > 0 and (base.row, base.col) == (row, col) for base in bases.values()):
+            return False
+        return not any(
+            tank.hp > 0 and (tank.row, tank.col) == (row, col)
+            for tank in tanks.values()
+        )
+
+    @staticmethod
+    def _is_combat_terminal(tanks: Dict[int, Tank], bases: Dict[int, Base]) -> bool:
+        max_alive = tanks[PLAYER_MAX].hp > 0 and bases[PLAYER_MAX].hp > 0
+        min_alive = tanks[PLAYER_MIN].hp > 0 and bases[PLAYER_MIN].hp > 0
+        return not max_alive or not min_alive
 
     @classmethod
     def _advance_bullet_one_cell(
         cls,
-        state: GameState,
-        bullet: Bullet,
+        bullet_index: int,
+        bullets: List[Bullet],
+        tanks: Dict[int, Tank],
+        bases: Dict[int, Base],
+        brick_walls: Dict[tuple[int, int], BrickWall],
+        steel_walls: frozenset[tuple[int, int]],
+        rows: int,
+        cols: int,
         event: Optional[StepEvent],
     ) -> None:
+        bullet = bullets[bullet_index]
         dr, dc = DIRECTION_DELTAS[bullet.direction]
-        nr, nc = bullet.row + dr, bullet.col + dc
-
-        # Out of map bounds
-        if not state.in_bounds(nr, nc):
-            bullet.active = False
+        next_row, next_col = bullet.row + dr, bullet.col + dc
+        if not (0 <= next_row < rows and 0 <= next_col < cols):
+            bullets[bullet_index] = replace(bullet, active=False)
             return
 
-        bullet.row, bullet.col = nr, nc
-
-        # Collide with opposing active bullet at same square
-        for other in state.bullets:
-            if other is not bullet and other.active and other.row == nr and other.col == nc:
-                bullet.active = False
-                other.active = False
-                if event is not None:
-                    event.impacts.append((nr, nc, "BULLET"))
+        bullets[bullet_index] = replace(bullet, row=next_row, col=next_col)
+        for other_index, other in enumerate(bullets):
+            if (
+                other_index != bullet_index
+                and other.active
+                and other.owner_id != bullet.owner_id
+                and (other.row, other.col) == (next_row, next_col)
+            ):
+                bullets[bullet_index] = replace(bullets[bullet_index], active=False)
+                bullets[other_index] = replace(other, active=False)
+                cls._record_impact(event, next_row, next_col, "BULLET")
                 return
 
-        # Collide with indestructible steel wall
-        if (nr, nc) in state.steel_walls:
-            bullet.active = False
-            if event is not None:
-                event.impacts.append((nr, nc, "STEEL"))
+        if (next_row, next_col) in steel_walls:
+            bullets[bullet_index] = replace(bullets[bullet_index], active=False)
+            cls._record_impact(event, next_row, next_col, "STEEL")
             return
 
-        # Collide with destructible brick wall
-        brick = state.brick_walls.get((nr, nc))
-        if brick is not None and brick.hp > 0:
-            brick.take_damage(DAMAGE_PER_HIT)
-            bullet.active = False
-            if event is not None:
-                event.impacts.append((nr, nc, "WALL"))
+        wall = brick_walls.get((next_row, next_col))
+        if wall is not None and wall.hp > 0:
+            brick_walls[(next_row, next_col)], _ = wall.damaged(DAMAGE_PER_HIT)
+            bullets[bullet_index] = replace(bullets[bullet_index], active=False)
+            cls._record_impact(event, next_row, next_col, "WALL")
             return
 
-        # Collide with any base
-        for base in state.bases.values():
-            if base.hp > 0 and base.row == nr and base.col == nc:
-                base.take_damage(DAMAGE_PER_HIT)
-                bullet.active = False
-                if event is not None:
-                    event.impacts.append((nr, nc, "BASE"))
+        for player_id in (PLAYER_MAX, PLAYER_MIN):
+            base = bases[player_id]
+            if base.hp > 0 and (base.row, base.col) == (next_row, next_col):
+                bases[player_id], _ = base.damaged(DAMAGE_PER_HIT)
+                bullets[bullet_index] = replace(bullets[bullet_index], active=False)
+                cls._record_impact(event, next_row, next_col, "BASE")
                 return
 
-        # Collide with any tank (excluding owner at spawn square, handled since bullet moved >=1 cell)
-        for tank in state.tanks.values():
-            if tank.hp > 0 and tank.row == nr and tank.col == nc:
-                tank.take_damage(DAMAGE_PER_HIT)
-                bullet.active = False
-                if event is not None:
-                    event.impacts.append((nr, nc, "TANK"))
+        for player_id in (PLAYER_MAX, PLAYER_MIN):
+            tank = tanks[player_id]
+            if tank.hp > 0 and (tank.row, tank.col) == (next_row, next_col):
+                tanks[player_id], _ = tank.damaged(DAMAGE_PER_HIT)
+                bullets[bullet_index] = replace(bullets[bullet_index], active=False)
+                cls._record_impact(event, next_row, next_col, "TANK")
                 return
+
+    @staticmethod
+    def _record_impact(
+        event: Optional[StepEvent],
+        row: int,
+        col: int,
+        impact_type: str,
+    ) -> None:
+        if event is not None:
+            event.impacts.append((row, col, impact_type))
