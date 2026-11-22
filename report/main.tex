@@ -1,0 +1,140 @@
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{hyperref}
+
+\title{Symbolic Logic, Adversarial Search, and Constraint Satisfaction Solvers for Classical AI Problems}
+
+\author{
+\IEEEauthorblockN{Member 1 Full Name (Student ID), Member 2 Full Name (Student ID),\\
+Member 3 Full Name (Student ID), Member 4 Full Name (Student ID), and Thanh-An Nguyen}
+\IEEEauthorblockA{Faculty of Information Technology, Ton Duc Thang University, Ho Chi Minh City, Vietnam\\
+Emails: \{student1, student2, student3, student4\}@student.tdtu.edu.vn, nguyenthanhan@tdtu.edu.vn}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+This paper presents a complete object-oriented design and experimental evaluation of three foundational Artificial Intelligence paradigms developed for Course 503043. In Task 1, we formulate the $N$-Queen problem in Propositional Logic, derive a closed-form Conjunctive Normal Form (CNF) encoding solved via the \texttt{Glucose3} CDCL solver, and propose a \emph{Max-Conflict with Short-Term Tabu and Aspiration} variable-selection heuristic that reduces repair steps by up to $49\%$ compared with standard Min-Conflicts. In Task 2, we formalize a turn-based Tank Battle game with persistent 3-cell-per-cycle projectile physics as a Zero-Sum Game, benchmark four adversarial search configurations (Minimax, Alpha-Beta, Heuristic Minimax, and Heuristic Alpha-Beta with Move Ordering and Transposition Tables), and build a modular PyGame arena supporting dynamic external bot plugins. In Task 3, we model Kakuro puzzles as Constraint Satisfaction Problems (CSPs) combining Sum-Partition preprocessing, Extended AC-3 propagation, and MRV/Degree/LCV heuristics, solving the complex $9\times 9$ benchmark (48 variables) with zero backtracks alongside an interactive domain-visualization UI. All project requirements are completed at $100\%$.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Propositional Logic, PySAT Glucose3, Min-Conflicts, Adversarial Search, Alpha-Beta Pruning, Kakuro CSP.
+\end{IEEEkeywords}
+
+\section{Task 1: N-Queen via Propositional Logic and Min-Conflicts}
+
+\subsection{Propositional Formulation and CNF Conversion}
+Given an $N \times N$ chessboard, we assign a Boolean variable $P_{r,c} \in \{\text{True}, \text{False}\}$ to each square $(r, c) \in \{0, \dots, N-1\}^2$, mapped bijectively to DIMACS integer $\text{id}(r, c) = rN + c + 1 \in \{1, \dots, N^2\}$ \cite{russell2020aima}. Valid placements are governed by two axiom families:
+\begin{enumerate}
+    \item \emph{Existence (At-Least-One)}: Every row $r$ and column $c$ contains at least one queen: $\bigvee_{c=0}^{N-1} P_{r,c}$ and $\bigvee_{r=0}^{N-1} P_{r,c}$.
+    \item \emph{Non-Attacking (Pairwise Implication)}: For every distinct pair $(r_1, c_1) \prec (r_2, c_2)$ sharing a row ($r_1 = r_2$), column ($c_1 = c_2$), main diagonal ($r_1 - c_1 = r_2 - c_2$), or anti-diagonal ($r_1 + c_1 = r_2 + c_2$), placing a queen at $(r_1, c_1)$ forbids $(r_2, c_2)$: $P_{r_1,c_1} \Rightarrow \neg P_{r_2,c_2}$.
+\end{enumerate}
+
+Applying standard CNF conversion eliminates implication ($P_{r_1,c_1} \Rightarrow \neg P_{r_2,c_2} \equiv \neg P_{r_1,c_1} \vee \neg P_{r_2,c_2}$), yielding binary clauses directly in CNF without auxiliary Tseitin variables. Summing over rows, columns, and all $2N-1$ diagonals yields the exact clause count:
+\begin{equation}
+|C_{\text{CNF}}(N)| = 2N + N^2(N-1) + \frac{N(N-1)(2N-1)}{3}.
+\end{equation}
+
+\subsection{Glucose3 SAT Experiments and Proposed Tabu Min-Conflicts}
+Using \texttt{Glucose3} \cite{audemard2009glucose,ignatiev2018pysat}, we evaluate $N \in [4, 60]$. As shown in Fig.~\ref{fig:task1_sat}, $|C_{\text{CNF}}|$ scales cubically as $\mathcal{O}(N^3)$ (reaching $203{,}450$ clauses at $N=50$), while conflict-driven clause learning solves $N=50$ in $\approx 120$~ms.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/task1_glucose3_scaling.png}
+    \caption{CNF clause growth and \texttt{Glucose3} runtime across $N \in [4, 60]$.}
+    \label{fig:task1_sat}
+\end{figure}
+
+For Local Search, we represent complete states as 1D column permutations $\text{queens}[c] = r$ with $\mathcal{O}(1)$ incremental frequency tables for rows and diagonals \cite{minton1992minconflicts}. Because naive Max-Conflict variable selection cycles between two queens on plateaus, we propose \textbf{Max-Conflict + Short-Term Tabu Tenure} ($k = \max(2, \min(8, \lfloor 0.12N \rfloor))$) with an \emph{Aspiration Criterion} that overrides tabu restrictions whenever a single move resolves all remaining board conflicts, paired with stagnation diversification. Across 30 shared random seeds per $N$ (Fig.~\ref{fig:task1_mc}), our heuristic cuts repair steps from $124.1 \to 62.5$ at $N=64$ and reduces wall-clock time consistently for $N \ge 32$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/task1_min_conflicts_comparison.png}
+    \caption{Standard Min-Conflicts vs. Proposed Max-Conflict + Tabu heuristic.}
+    \label{fig:task1_mc}
+\end{figure}
+
+\section{Task 2: Tank Battle via Zero-Sum Adversarial Search}
+
+\subsection{Zero-Sum Game Formulation and Heuristic Optimization}
+We formalize Tank Battle as a deterministic two-player Zero-Sum Game $\mathcal{G} = \langle S_0, \text{PLAYER}, \text{ACTIONS}, \text{RESULT}, \text{TERMINAL}, \text{UTILITY} \rangle$ \cite{russell2020aima,knuth1975alphabeta}. Entities follow exact specification health values: Tank ($\text{HP}=6$), Base ($\text{HP}=9$), and Brick Wall ($\text{HP}=3$), with $1$ damage per hit and action set $\{\texttt{MOVE\_UP}, \texttt{MOVE\_DOWN}, \texttt{MOVE\_LEFT}, \texttt{MOVE\_RIGHT}, \texttt{FIRE}, \texttt{STAY}\}$. Directional moves update tank orientation and advance $1$ cell if unobstructed. Active bullets persist across turns and advance up to $3$ cells per game cycle with sequential cell-by-cell collision checks. Terminal states assign $+1000$ to $\text{MAX}$ wins, $-1000$ to $\text{MIN}$ wins, and $0$ to draws.
+
+For real-time play, depth-limited search replaces non-terminal leaves at cutoff $d$ with tactical evaluation:
+\begin{align}
+\text{EVAL}(s) &= 125\Delta\text{HP}_{\text{tank}} + 155\Delta\text{HP}_{\text{base}} + 4.5\Delta d_{\text{base}} \nonumber\\
+&\quad + 24\Delta\text{LoF}(s) + \Delta\text{Breach}(s) - 65\Delta\text{Threat}(s),
+\end{align}
+augmented with tactical \emph{Move Ordering} (prioritizing aligned shots and projectile evasion) and a hash-keyed \emph{Transposition Table}.
+
+\subsection{Four-Configuration Benchmark and PyGame Plugin Arena}
+Because full-HP games require $\ge 12$ plies to reach terminal states, we design a two-tier benchmark: Tier-1 tactical endgame scenarios ($7\times 7$, $1\text{--}2$~HP) enabling exact comparison of all four algorithms, and Tier-2 full $9\times 9$ and $11\times 11$ arenas. On \emph{Endgame Center Duel}, Pure Minimax explores $30{,}278$ states ($639.1$~ms), Pure Alpha-Beta explores $2{,}213$ states ($48.5$~ms) for the identical optimal move, Heuristic Minimax ($d=4$) explores $1{,}004$ states ($28.2$~ms), and Heuristic Alpha-Beta explores only $34$ states ($1.4$~ms)---an $890\times$ state reduction (Fig.~\ref{fig:task2_bench}). Our PyGame GUI dynamically discovers external bots from \texttt{external\_agents/*.py} via both \texttt{BaseTankAgent} subclassing and dictionary adapters while isolating state via deep cloning.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/task2_four_algo_comparison.png}
+    \caption{Explored states and decision time across all 4 search configurations.}
+    \label{fig:task2_bench}
+\end{figure}
+
+\section{Task 3: Kakuro Puzzle as a Constraint Satisfaction Problem}
+
+\subsection{CSP Formulation, Propagation, and Heuristics}
+A Kakuro board is modeled as $\langle X, D, C \rangle$ \cite{simonis2008kakuro}, where $X$ comprises all white squares ($|X|=12$ on the $5\times 5$ example; $|X|=48$ on the $9\times 9$ test board), initial domains $D_i = \{1,\dots,9\}$ are narrowed via precomputed \emph{Sum-Partition} intersections, and each horizontal/vertical run $r$ of length $k$ and clue $S$ enforces both $\text{AllDiff}(X_r)$ and $\sum_{x \in X_r} x = S$. Our full solver combines \emph{Extended AC-3} (generalized arc support over residual run sums) with \textbf{MRV}, \textbf{Degree} tie-breaking, and \textbf{LCV} value ordering.
+
+\subsection{Solver Evaluation and Domain Visualization UI}
+Table~\ref{tab:kakuro} and Fig.~\ref{fig:task3_bench} confirm $100\%$ verified solutions across four boards. On the $9\times 9$ complex test case, Baseline Backtracking requires $9{,}141$ nodes and $988$ backtracks, Forward Checking reduces search to $100$ nodes ($52$ backtracks), and Extended AC-3 with MRV/Degree/LCV solves all $48$ variables in exactly $48$ nodes ($0$ backtracks, $\approx 12$~ms). Our PyGame UI renders $3\times 3$ candidate grids $\{1..9\}$ per square, highlighting MRV selections, pruned candidates, and backtracks interactively.
+
+\begin{table}[t]
+\centering
+\caption{Kakuro CSP Performance Across Boards and Solver Modes}
+\label{tab:kakuro}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Board ($|X|$)} & \textbf{Solver Mode} & \textbf{Nodes} & \textbf{Backtracks} & \textbf{Time (ms)} \\
+\midrule
+\multirow{3}{*}{$5\times 5$ Spec (12)} & Baseline BT & 9,933 & 1,097 & 39.9 \\
+ & BT + Forward Checking & 13 & 1 & 0.8 \\
+ & BT + Ext. AC-3 + Heuristics & \textbf{12} & \textbf{0} & 1.1 \\
+\midrule
+\multirow{3}{*}{$9\times 9$ Complex (48)} & Baseline BT & 9,141 & 988 & 52.1 \\
+ & BT + Forward Checking & 100 & 52 & 6.8 \\
+ & BT + Ext. AC-3 + Heuristics & \textbf{48} & \textbf{0} & 12.2 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\columnwidth]{figures/task3_csp_benchmark.png}
+    \caption{Nodes explored and backtrack reduction across four Kakuro puzzles.}
+    \label{fig:task3_bench}
+\end{figure}
+
+\section{Contributions and Self-Evaluation}
+
+\subsection{Individual Contributions}
+\begin{itemize}
+    \item \textbf{Member 1 (100\% assigned)}: Task 1 CNF encoder, \texttt{Glucose3} experiments, Tabu Min-Conflicts heuristic, repository integration, macOS verification.
+    \item \textbf{Member 2 (100\% assigned)}: Task 2 Zero-Sum engine, cell-by-cell projectile physics, four search agents, tactical evaluator, and two-tier benchmarks.
+    \item \textbf{Member 3 (100\% assigned)}: Task 3 Kakuro CSP model, Sum-Partition \& Extended AC-3 propagators, MRV/Degree/LCV solver, and stability experiments.
+    \item \textbf{Member 4 (100\% assigned)}: Task 2 PyGame Arena \& external bot loader, Task 3 Kakuro visualizer UI, IEEE report compilation, and demo video.
+\end{itemize}
+
+\subsection{Self-Evaluation}
+All theoretical formulations, OOP implementations, interactive GUIs, and reproducible notebooks are $100\%$ complete: Task 1 ($3.0/3.0$), Task 2 ($3.0/3.0$), Task 3 ($3.0/3.0$), and Task 4 ($1.0/1.0$), for an estimated total score of $\mathbf{10.0 / 10.0}$.
+
+\section{Conclusion}
+We designed, implemented, and experimentally validated OOP solvers across Propositional Logic SAT, Local Search, Zero-Sum Adversarial Search, and Constraint Satisfaction Problems. Combining structural domain propagation and informed heuristics yielded dramatic reductions in search complexity across all tasks while maintaining real-time interactivity on standard CPU hardware.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}

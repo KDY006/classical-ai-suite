@@ -1,0 +1,125 @@
+{
+  "name": "Hard Benchmark Board (8x8)",
+  "description": "8x8 Kakuro stability test board (38 white cells).",
+  "grid": [
+    [
+      "B",
+      {
+        "down": 16
+      },
+      {
+        "down": 38
+      },
+      "B",
+      {
+        "down": 30
+      },
+      {
+        "down": 14
+      },
+      {
+        "down": 42
+      },
+      "B"
+    ],
+    [
+      {
+        "across": 17
+      },
+      "W",
+      "W",
+      {
+        "across": 22,
+        "down": 14
+      },
+      "W",
+      "W",
+      "W",
+      {
+        "down": 21
+      }
+    ],
+    [
+      {
+        "across": 42
+      },
+      "W",
+      "W",
+      "W",
+      "W",
+      "W",
+      "W",
+      "W"
+    ],
+    [
+      "B",
+      {
+        "across": 22,
+        "down": 18
+      },
+      "W",
+      "W",
+      "W",
+      {
+        "across": 13,
+        "down": 28
+      },
+      "W",
+      "W"
+    ],
+    [
+      {
+        "across": 7
+      },
+      "W",
+      "W",
+      {
+        "across": 30,
+        "down": 21
+      },
+      "W",
+      "W",
+      "W",
+      "W"
+    ],
+    [
+      {
+        "across": 24
+      },
+      "W",
+      "W",
+      "W",
+      {
+        "across": 16,
+        "down": 6
+      },
+      "W",
+      "W",
+      "W"
+    ],
+    [
+      {
+        "across": 40
+      },
+      "W",
+      "W",
+      "W",
+      "W",
+      "W",
+      "W",
+      "W"
+    ],
+    [
+      "B",
+      {
+        "across": 15
+      },
+      "W",
+      "W",
+      "W",
+      "W",
+      "W",
+      "B"
+    ]
+  ]
+}

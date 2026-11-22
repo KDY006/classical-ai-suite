@@ -1,0 +1,11 @@
+{
+  "name": "Example Board (5x5 - Spec Page 4)",
+  "description": "Official 5x5 Kakuro example puzzle from Task 3 specification (12 white cells, sum=60).",
+  "grid": [
+    ["B", "B", {"down": 21}, {"down": 14}, "B"],
+    ["B", {"down": 14, "across": 12}, "W", "W", {"down": 11}],
+    [{"across": 21}, "W", "W", "W", "W"],
+    [{"across": 11}, "W", "W", "W", "W"],
+    ["B", {"across": 16}, "W", "W", "B"]
+  ]
+}

@@ -1,0 +1,73 @@
+# ==============================================================================
+# .gitignore cho Dự án Python AI (Môn 503043 - ĐH Tôn Đức Thắng)
+# ==============================================================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Môi trường ảo (Virtual Environments)
+.venv/
+venv/
+ENV/
+env/
+env.bak/
+venv.bak/
+.env
+
+# Jupyter Notebook checkpoints & runtime data
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# Dữ liệu tạm của Pytest / Coverage / Profiling
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# File cấu hình IDE & Editor
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# File hệ điều hành (macOS / Windows / Linux)
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# File nén bài nộp cá nhân (không commit file zip nộp bài lên git)
+*.zip
+*.tar.gz
+*.rar
+AI_final_*.zip
+
+# File tạm sinh ra khi biên dịch LaTeX cục bộ (giữ lại main.tex, references.bib, report.pdf)
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot

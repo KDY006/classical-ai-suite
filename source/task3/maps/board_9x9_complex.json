@@ -1,0 +1,15 @@
+{
+  "name": "Complex Test Board (9x9 - Spec Page 5)",
+  "description": "Official 9x9 complex Kakuro test case from Requirement 3.2 (48 white cells, sum=249).",
+  "grid": [
+    ["B", "B", {"down": 44}, {"down": 16}, {"down": 9}, "B", {"down": 15}, {"down": 44}, "B"],
+    ["B", {"across": 22}, "W", "W", "W", {"down": 11, "across": 3}, "W", "W", {"down": 14}],
+    ["B", {"down": 17, "across": 28}, "W", "W", "W", "W", "W", "W", "W"],
+    [{"across": 14}, "W", "W", "B", {"down": 12, "across": 20}, "W", "W", "W", "W"],
+    [{"across": 17}, "W", "W", {"down": 29, "across": 22}, "W", "W", "W", "W", {"down": 7}],
+    ["B", {"down": 12, "across": 28}, "W", "W", "W", "W", {"across": 12}, "W", "W"],
+    [{"across": 14}, "W", "W", "W", "W", {"down": 7}, {"down": 12, "across": 6}, "W", "W"],
+    [{"across": 39}, "W", "W", "W", "W", "W", "W", "W", "B"],
+    ["B", {"across": 16}, "W", "W", {"across": 8}, "W", "W", "W", "B"]
+  ]
+}

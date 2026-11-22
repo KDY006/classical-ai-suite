@@ -1,0 +1,76 @@
+{
+  "name": "Medium Benchmark Board (6x6)",
+  "description": "6x6 Kakuro stability test board (17 white cells).",
+  "grid": [
+    [
+      "B",
+      {
+        "down": 17
+      },
+      {
+        "down": 31
+      },
+      "B",
+      {
+        "down": 9
+      },
+      {
+        "down": 12
+      }
+    ],
+    [
+      {
+        "across": 17
+      },
+      "W",
+      "W",
+      {
+        "across": 7,
+        "down": 23
+      },
+      "W",
+      "W"
+    ],
+    [
+      {
+        "across": 29
+      },
+      "W",
+      "W",
+      "W",
+      "W",
+      "W"
+    ],
+    [
+      "B",
+      {
+        "across": 24,
+        "down": 14
+      },
+      "W",
+      "W",
+      "W",
+      "W"
+    ],
+    [
+      {
+        "across": 15
+      },
+      "W",
+      "W",
+      "W",
+      "B",
+      "B"
+    ],
+    [
+      {
+        "across": 14
+      },
+      "W",
+      "W",
+      "W",
+      "B",
+      "B"
+    ]
+  ]
+}
