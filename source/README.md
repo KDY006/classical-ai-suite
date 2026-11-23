@@ -24,6 +24,15 @@ pip install -r requirement.txt
 ## 2. Câu Lệnh Chạy Từng Task (Đứng tại thư mục `source/`)
 
 ### Task 1: Bài toán N-Queen (Logic mệnh đề `Glucose3` & Tìm kiếm cục bộ `Min-Conflicts`)
+
+Mở giao diện bàn cờ, chọn kích thước và thuật toán rồi nhấn **Solve**:
+
+```bash
+python task1/gui.py
+```
+
+Giao diện sử dụng Tkinter của Python. Quân hậu màu đỏ cho biết quân đó đang xung đột.
+
 ```bash
 # Chạy thực nghiệm mặc định (Glucose3 với N=4..50 và đối sánh Min-Conflicts với N=8..100)
 python task1/main_task1.py
@@ -31,7 +40,7 @@ python task1/main_task1.py
 # Hoặc tùy chỉnh kích thước bàn cờ và số lần thử nghiệm
 python task1/main_task1.py --sat-sizes 4 8 16 32 50 --mc-sizes 8 16 32 64 100 --trials 30 --max-steps 2500
 ```
-- File Notebook thực nghiệm (đã lưu sẵn toàn bộ kết quả đầu ra và biểu đồ): `task1/experiments_task1.ipynb`.
+- Notebook thực nghiệm (đã lưu kết quả và biểu đồ): `task1/experiments_task1.ipynb`.
 
 ### Task 2: Trò chơi Tank Battle (Tìm kiếm đối kháng & Giao diện PyGame Arena)
 ```bash
