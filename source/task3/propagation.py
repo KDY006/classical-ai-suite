@@ -57,7 +57,7 @@ class SumPartitionCatalog:
         pruned: PrunedRecord = {}
 
         for pos, var in csp.variables.items():
-            allowed = set(range(1, 10))
+            allowed = set(domains[pos])
             if var.across_run is not None:
                 allowed &= cls.allowed_digits(var.across_run.length, var.across_run.target_sum, set())
             if var.down_run is not None:
@@ -87,7 +87,10 @@ class ForwardChecker:
         for run in (var.across_run, var.down_run):
             if run is None:
                 continue
-            assigned_vals = {assignment[v.pos] for v in run.variables if v.pos in assignment}
+            assigned_list = [assignment[v.pos] for v in run.variables if v.pos in assignment]
+            assigned_vals = set(assigned_list)
+            if len(assigned_vals) != len(assigned_list):
+                return False, pruned
             unassigned_vars = [v for v in run.variables if v.pos not in assignment]
             k_rem = len(unassigned_vars)
             sum_rem = run.target_sum - sum(assigned_vals)
@@ -122,7 +125,7 @@ class ExtendedAC3Propagator:
       2. Prunes candidate value ``v`` for unassigned cell ``X_i`` if no valid tuple of
          distinct remaining values from the other unassigned cells' current domains can
          sum to ``target_sum - sum(assigned) - v`` (verified via fast domain-aware DP/DFS
-         since run length <= 8).
+         since run length <= 9).
     """
 
     @classmethod
@@ -132,6 +135,8 @@ class ExtendedAC3Propagator:
         assignment: Dict[Tuple[int, int], int],
         domains: DomainMap,
         seed_pos: Optional[Tuple[int, int]] = None,
+        changed_positions=None,
+        check_cancel=None,
     ) -> Tuple[bool, PrunedRecord]:
         pruned: PrunedRecord = {}
         queue: deque[RunConstraint] = deque()
@@ -140,8 +145,8 @@ class ExtendedAC3Propagator:
         if seed_pos is None:
             initial_runs = csp.runs
         else:
-            v = csp.variables[seed_pos]
-            initial_runs = [r for r in (v.across_run, v.down_run) if r is not None]
+            positions = [seed_pos, *(changed_positions or [])]
+            initial_runs = [r for p in positions for r in (csp.variables[p].across_run, csp.variables[p].down_run) if r is not None]
 
         for r in initial_runs:
             if r.run_id not in in_queue:
@@ -149,10 +154,12 @@ class ExtendedAC3Propagator:
                 in_queue.add(r.run_id)
 
         while queue:
+            if check_cancel is not None:
+                check_cancel()
             run = queue.popleft()
             in_queue.remove(run.run_id)
 
-            ok, changed_positions = cls._revise_run(run, assignment, domains, pruned)
+            ok, changed_positions = cls._revise_run(run, assignment, domains, pruned, check_cancel)
             if not ok:
                 return False, pruned
 
@@ -176,6 +183,7 @@ class ExtendedAC3Propagator:
         assignment: Dict[Tuple[int, int], int],
         domains: DomainMap,
         pruned: PrunedRecord,
+        check_cancel=None,
     ) -> Tuple[bool, List[Tuple[int, int]]]:
         changed: List[Tuple[int, int]] = []
         used_assigned: Set[int] = set()
@@ -211,6 +219,8 @@ class ExtendedAC3Propagator:
             peer_doms = [domains[unassigned[j]] for j in range(k) if j != idx]
 
             for cand in current_dom:
+                if check_cancel is not None:
+                    check_cancel()
                 if cand in used_assigned:
                     continue
                 if cls._has_support(peer_doms, 0, rem_sum - cand, used_assigned | {cand}):
@@ -239,12 +249,18 @@ class ExtendedAC3Propagator:
             return target_rem == 0
 
         # Quick min/max residual sum bound check
-        min_rem = rem_vars * (rem_vars + 1) // 2
-        max_rem = rem_vars * (19 - rem_vars) // 2
+        remaining = [domain - used for domain in peer_doms[idx:]]
+        if any(not domain for domain in remaining):
+            return False
+        available = sorted(set().union(*remaining))
+        if len(available) < rem_vars:
+            return False
+        min_rem = max(sum(min(d) for d in remaining), sum(available[:rem_vars]))
+        max_rem = min(sum(max(d) for d in remaining), sum(available[-rem_vars:]))
         if target_rem < min_rem or target_rem > max_rem:
             return False
 
-        for val in peer_doms[idx]:
+        for val in sorted(peer_doms[idx]):
             if val not in used and val <= target_rem:
                 if cls._has_support(peer_doms, idx + 1, target_rem - val, used | {val}):
                     return True

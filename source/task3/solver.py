@@ -19,13 +19,13 @@ from .propagation import (
 
 class SolverMode(str, Enum):
     PLAIN_BT = "Baseline Backtracking"
-    BT_FC = "Backtracking + Forward Checking"
+    BT_FC = "BT + Forward Checking + MRV"
     BT_MAC_HEURISTICS = "BT + Extended AC-3 + MRV/Degree/LCV"
 
 
 @dataclass
 class SolverStep:
-    """Immutable snapshot of a single search/propagation event for the Kakuro UI."""
+    """Independent snapshot of a single search/propagation event for the Kakuro UI."""
 
     step_type: str  # PREPROCESS | SELECT_VAR | ASSIGN | PRUNE | BACKTRACK | SOLVED
     focus_pos: Optional[Tuple[int, int]]
@@ -52,6 +52,12 @@ class KakuroSolveResult:
     pruned_values: int
     valid_verified: bool
     steps_trace: List[SolverStep] = field(default_factory=list)
+    status: str = "UNSOLVED"
+    trace_truncated: bool = False
+
+
+class SearchCancelled(Exception):
+    """Cooperative cancellation, distinct from UNSAT."""
 
 
 class KakuroSolver:
@@ -63,26 +69,48 @@ class KakuroSolver:
         record_steps: bool = False,
         max_recorded_steps: int = 2500,
         node_limit: int = 300_000,
+        cancel_event=None,
     ) -> None:
+        if node_limit < 1 or max_recorded_steps < 1:
+            raise ValueError("Limits must be positive.")
         self.mode: SolverMode = mode
         self.record_steps: bool = record_steps
         self.max_recorded_steps: int = max_recorded_steps
         self.node_limit: int = node_limit
+        self.cancel_event = cancel_event
 
         self._nodes: int = 0
         self._backtracks: int = 0
         self._pruned_count: int = 0
         self._steps: List[SolverStep] = []
 
+    def _check_cancel(self):
+        if self.cancel_event is not None and self.cancel_event.is_set():
+            raise SearchCancelled()
+
     def solve(self, csp: KakuroCSP) -> KakuroSolveResult:
+        t0 = time.perf_counter()
+        try:
+            return self._solve(csp)
+        except SearchCancelled:
+            return KakuroSolveResult(csp.name, self.mode, False, dict(csp.givens),
+                (time.perf_counter()-t0)*1000, self._nodes, self._backtracks,
+                self._pruned_count, False, status='CANCELLED')
+
+    def _solve(self, csp: KakuroCSP) -> KakuroSolveResult:
         self._nodes = 0
         self._backtracks = 0
         self._pruned_count = 0
         self._steps = []
 
+        self._limit_hit = False
+        self._trace_truncated = False
         t0 = time.perf_counter()
-        assignment: Dict[Tuple[int, int], int] = {}
+        assignment: Dict[Tuple[int, int], int] = dict(csp.givens)
+        self._emit("INITIAL", None, None, assignment, csp.initial_domains(), {}, "Initial domains before preprocessing.")
 
+        givens_ok = all(run.is_consistent_partial(assignment) for run in csp.runs)
+        ok = givens_ok
         if self.mode == SolverMode.PLAIN_BT:
             domains = csp.initial_domains()
             self._emit(
@@ -108,7 +136,7 @@ class KakuroSolver:
             )
         else:
             domains, pre_pruned = SumPartitionCatalog.preprocess_node_domains(csp)
-            ok, ac_pruned = ExtendedAC3Propagator.propagate(csp, assignment, domains, seed_pos=None)
+            ok, ac_pruned = ExtendedAC3Propagator.propagate(csp, assignment, domains, seed_pos=None, check_cancel=self._check_cancel) if givens_ok else (False, {})
             merged_pruned = self._merge_pruned(pre_pruned, ac_pruned)
             self._count_pruned(merged_pruned)
             self._emit(
@@ -120,25 +148,22 @@ class KakuroSolver:
                 merged_pruned,
                 "Applied Sum-Partition preprocessing + initial Extended AC-3 arc consistency.",
             )
-            if not ok:
-                elapsed_ms = (time.perf_counter() - t0) * 1000.0
-                return KakuroSolveResult(
-                    puzzle_name=csp.name,
-                    mode=self.mode,
-                    solved=False,
-                    assignment={},
-                    elapsed_ms=elapsed_ms,
-                    nodes_explored=0,
-                    backtracks=0,
-                    pruned_values=self._pruned_count,
-                    valid_verified=False,
-                    steps_trace=self._steps,
-                )
-
-        solved = self._backtrack(csp, assignment, domains)
+        initial_ok = givens_ok and all(domains.values()) and ok
+        if initial_ok and self.mode == SolverMode.BT_FC:
+            for pos, value in assignment.items():
+                initial_ok, pruned = ForwardChecker.propagate(csp, pos, value, assignment, domains)
+                self._count_pruned(pruned)
+                if pruned:
+                    self._emit("PRUNE", pos, value, assignment, domains, pruned,
+                               "Propagate constraints from given digits.")
+                if not initial_ok:
+                    break
+        solved = initial_ok and self._backtrack(csp, assignment, domains)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         verified = csp.verify_solution(assignment) if solved else False
 
+        solved = solved and verified
+        status = "SOLVED" if solved else ("NODE_LIMIT" if self._limit_hit else "UNSAT")
         if solved:
             self._emit(
                 "SOLVED",
@@ -149,6 +174,10 @@ class KakuroSolver:
                 {},
                 f"Solved all {len(csp.variables)} variables in {self._nodes} nodes ({self._backtracks} backtracks).",
             )
+
+        else:
+            self._emit(status, None, None, assignment, domains, {},
+                       "Node limit reached; no conclusion about satisfiability." if self._limit_hit else "No solution exists.")
 
         return KakuroSolveResult(
             puzzle_name=csp.name,
@@ -161,6 +190,8 @@ class KakuroSolver:
             pruned_values=self._pruned_count,
             valid_verified=verified,
             steps_trace=self._steps,
+            status=status,
+            trace_truncated=self._trace_truncated,
         )
 
     def _backtrack(
@@ -169,9 +200,11 @@ class KakuroSolver:
         assignment: Dict[Tuple[int, int], int],
         domains: DomainMap,
     ) -> bool:
+        self._check_cancel()
         if len(assignment) == len(csp.variables):
-            return True
+            return csp.verify_solution(assignment)
         if self._nodes >= self.node_limit:
+            self._limit_hit = True
             return False
 
         pos = self._select_unassigned_variable(csp, assignment, domains)
@@ -184,8 +217,14 @@ class KakuroSolver:
         self._emit("SELECT_VAR", pos, None, assignment, domains, {}, msg)
 
         for val in cand_values:
+            self._check_cancel()
+            if self._nodes >= self.node_limit:
+                self._limit_hit = True
+                return False
             self._nodes += 1
             if not csp.is_consistent(pos, val, assignment):
+                self._emit("REJECT", pos, val, assignment, domains, {},
+                           f"Rejected X{pos} = {val}: inconsistent sum or AllDifferent.")
                 continue
 
             saved_domains: DomainMap = {p: set(d) for p, d in domains.items()}
@@ -207,9 +246,10 @@ class KakuroSolver:
             elif self.mode == SolverMode.BT_FC:
                 prop_ok, pruned_rec = ForwardChecker.propagate(csp, pos, val, assignment, domains)
             else:
-                prop_ok, pruned_rec = ExtendedAC3Propagator.propagate(
-                    csp, assignment, domains, seed_pos=pos
-                )
+                prop_ok, pruned_rec = ForwardChecker.propagate(csp, pos, val, assignment, domains)
+                if prop_ok:
+                    prop_ok, ac_pruned = ExtendedAC3Propagator.propagate(csp, assignment, domains, seed_pos=pos, changed_positions=pruned_rec, check_cancel=self._check_cancel)
+                    pruned_rec = self._merge_pruned(pruned_rec, ac_pruned)
 
             if pruned_rec:
                 self._count_pruned(pruned_rec)
@@ -221,15 +261,18 @@ class KakuroSolver:
                     domains,
                     pruned_rec,
                     f"Constraint propagation from X{pos}={val} pruned {sum(len(v) for v in pruned_rec.values())} candidate(s)."
-                    + ("" if prop_ok else " -> Domain wipeout detected!"),
+                    + ("" if prop_ok else " -> Constraint inconsistency detected!"),
                 )
 
+            if not prop_ok:
+                self._emit("FAILURE", pos, val, assignment, domains, {}, "Dead end: constraint has no support or a domain is empty.")
             if prop_ok and self._backtrack(csp, assignment, domains):
                 return True
 
             # Undo assignment and restore domains (Backtrack)
             del assignment[pos]
-            domains = saved_domains
+            domains.clear()
+            domains.update(saved_domains)
             self._backtracks += 1
             self._emit(
                 "BACKTRACK",
@@ -241,7 +284,7 @@ class KakuroSolver:
                 f"Backtracked on X{pos} = {val}; restored domains.",
             )
 
-            if self._nodes >= self.node_limit:
+            if self._limit_hit:
                 return False
 
         return False
@@ -278,15 +321,22 @@ class KakuroSolver:
         if self.mode != SolverMode.BT_MAC_HEURISTICS or len(values) <= 1:
             return values
 
-        # Lecture 08 LCV (Least Constraining Value): prefer value eliminating fewest peer choices
-        peers_unassigned = [p for p in csp.peers[pos] if p not in assignment]
-
-        def constraining_impact(val: int) -> int:
-            eliminated = 0
-            for peer in peers_unassigned:
-                if val in domains[peer]:
-                    eliminated += 1
-            return eliminated
+        # Estimate LCV by applying the same propagation to a private trial state.
+        # Trial pruning is not counted in search statistics or visualized.
+        def constraining_impact(val: int) -> Tuple[int, int, int]:
+            self._check_cancel()
+            if not csp.is_consistent(pos, val, assignment):
+                return (1, 0, val)
+            trial_assignment = dict(assignment)
+            trial_assignment[pos] = val
+            trial_domains = {p: set(d) for p, d in domains.items()}
+            trial_domains[pos] = {val}
+            ok, trial_pruned = ForwardChecker.propagate(csp, pos, val, trial_assignment, trial_domains)
+            if ok:
+                ok, _ = ExtendedAC3Propagator.propagate(csp, trial_assignment, trial_domains, pos, changed_positions=trial_pruned, check_cancel=self._check_cancel)
+            eliminated = sum(len(domains[p]) - len(trial_domains[p])
+                             for p in domains if p not in trial_assignment)
+            return (0 if ok else 1, eliminated, val)
 
         return sorted(values, key=constraining_impact)
 
@@ -313,8 +363,15 @@ class KakuroSolver:
         pruned: PrunedRecord,
         message: str,
     ) -> None:
-        if not self.record_steps or len(self._steps) >= self.max_recorded_steps:
+        self._check_cancel()
+        if not self.record_steps:
             return
+        terminal = step_type in {"SOLVED", "UNSAT", "NODE_LIMIT"}
+        if not terminal and len(self._steps) >= self.max_recorded_steps - 1:
+            self._trace_truncated = True
+            return
+        if terminal and self._trace_truncated:
+            message = "Trace limit: intermediate events omitted. " + message
         self._steps.append(
             SolverStep(
                 step_type=step_type,

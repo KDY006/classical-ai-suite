@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple, Union
@@ -100,10 +101,23 @@ class KakuroCSP:
         name: str,
         raw_grid: List[List[CellSpec]],
         description: str = "",
+        givens: Optional[Dict[Tuple[int, int], int]] = None,
     ) -> None:
+        if not isinstance(raw_grid, list) or not raw_grid or not isinstance(raw_grid[0], list) or not raw_grid[0]:
+            raise ValueError("The board must be a non-empty rectangular grid.")
+        for row in raw_grid:
+            if not isinstance(row, list) or len(row) != len(raw_grid[0]):
+                raise ValueError("All rows must have the same length.")
+            for cell in row:
+                if cell in ("W", "B"):
+                    continue
+                if not isinstance(cell, dict) or not cell or not set(cell) <= {"across", "down"}:
+                    raise ValueError(f"Invalid cell: {cell!r}")
+                if any(type(v) is not int or not 1 <= v <= 45 for v in cell.values()):
+                    raise ValueError(f"Invalid clue sum: {cell!r}")
         self.name: str = name
         self.description: str = description
-        self.raw_grid: List[List[CellSpec]] = raw_grid
+        self.raw_grid: List[List[CellSpec]] = deepcopy(raw_grid)
         self.rows: int = len(raw_grid)
         self.cols: int = len(raw_grid[0]) if self.rows > 0 else 0
 
@@ -113,15 +127,34 @@ class KakuroCSP:
         self.peers: Dict[Tuple[int, int], Set[Tuple[int, int]]] = {}
 
         self._build_csp()
+        self.givens = dict(givens or {})
+        for pos, value in self.givens.items():
+            if pos not in self.variables or type(value) is not int or not 1 <= value <= 9:
+                raise ValueError(f"Invalid given digit at {pos}: {value!r}")
 
     @classmethod
     def from_json(cls, path: Path) -> "KakuroCSP":
-        with path.open("r", encoding="utf-8") as fh:
+        with Path(path).open("r", encoding="utf-8") as fh:
             data = json.load(fh)
+        return cls.from_dict(data, Path(path).stem)
+
+    @classmethod
+    def from_dict(cls, data, default_name="Kakuro") -> "KakuroCSP":
+        if not isinstance(data, dict) or "grid" not in data or not isinstance(data.get("givens", []), list):
+            raise ValueError("JSON must contain a grid and a valid givens list.")
+        givens = {}
+        for item in data.get("givens", []):
+            if not isinstance(item, dict) or not {"row", "col", "value"} <= set(item):
+                raise ValueError("Each given requires row, col and value.")
+            r, c, value = item["row"], item["col"], item["value"]
+            if type(r) is not int or type(c) is not int or (r, c) in givens:
+                raise ValueError("Invalid or duplicate given coordinates.")
+            givens[(r, c)] = value
         return cls(
-            name=data.get("name", path.stem),
+            name=data.get("name", default_name),
             raw_grid=data["grid"],
             description=data.get("description", ""),
+            givens=givens,
         )
 
     def _build_csp(self) -> None:
@@ -150,7 +183,7 @@ class KakuroCSP:
                         run_vars.append(self.variables[(r, cc)])
                         cc += 1
                     if not run_vars:
-                        raise ValueError(f"Across clue at ({r}, {c}) has zero white cells.")
+                        raise ValueError(f"Across clue at ({r+1}, {c+1}) has no white cells.")
                     rc = RunConstraint(run_counter, "ACROSS", (r, c), target, run_vars)
                     run_counter += 1
                     self.runs.append(rc)
@@ -165,18 +198,25 @@ class KakuroCSP:
                         run_vars.append(self.variables[(rr, c)])
                         rr += 1
                     if not run_vars:
-                        raise ValueError(f"Down clue at ({r}, {c}) has zero white cells.")
+                        raise ValueError(f"Down clue at ({r+1}, {c+1}) has no white cells.")
                     rc = RunConstraint(run_counter, "DOWN", (r, c), target, run_vars)
                     run_counter += 1
                     self.runs.append(rc)
                     for v in run_vars:
                         v.down_run = rc
 
+        if not self.variables:
+            raise ValueError("The board has no white cells.")
+        for run in self.runs:
+            if not 1 <= run.length <= 9:
+                raise ValueError(f"Invalid run length at {run.clue_pos}.")
         for pos, var in self.variables.items():
+            if var.across_run is None or var.down_run is None:
+                raise ValueError(f"White cell {pos} requires both across and down clues.")
             self.peers[pos] = var.peer_positions()
 
     def initial_domains(self) -> Dict[Tuple[int, int], Set[int]]:
-        return {pos: set(range(1, 10)) for pos in self.ordered_positions}
+        return {pos: {self.givens[pos]} if pos in self.givens else set(range(1, 10)) for pos in self.ordered_positions}
 
     def is_consistent(
         self,
@@ -186,13 +226,21 @@ class KakuroCSP:
     ) -> bool:
         """Check whether assigning ``X_pos = value`` stays consistent with its two runs."""
         var = self.variables[pos]
+        if type(value) is not int or not 1 <= value <= 9:
+            return False
+        if pos in self.givens and self.givens[pos] != value:
+            return False
+        old = assignment.get(pos)
         assignment[pos] = value
         ok = True
         if var.across_run is not None and not var.across_run.is_consistent_partial(assignment):
             ok = False
         if ok and var.down_run is not None and not var.down_run.is_consistent_partial(assignment):
             ok = False
-        del assignment[pos]
+        if old is None:
+            del assignment[pos]
+        else:
+            assignment[pos] = old
         return ok
 
     def verify_solution(self, assignment: Dict[Tuple[int, int], int]) -> bool:
@@ -200,6 +248,8 @@ class KakuroCSP:
         if set(assignment.keys()) != set(self.variables.keys()):
             return False
         for val in assignment.values():
-            if not (1 <= val <= 9):
+            if type(val) is not int or not (1 <= val <= 9):
                 return False
+        if any(assignment.get(pos) != value for pos, value in self.givens.items()):
+            return False
         return all(run.is_satisfied_complete(assignment) for run in self.runs)

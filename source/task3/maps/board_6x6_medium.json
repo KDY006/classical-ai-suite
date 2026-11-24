@@ -1,6 +1,6 @@
 {
   "name": "Medium Benchmark Board (6x6)",
-  "description": "6x6 Kakuro stability test board (17 white cells).",
+  "description": "6x6 Kakuro stability test board (19 white cells).",
   "grid": [
     [
       "B",
