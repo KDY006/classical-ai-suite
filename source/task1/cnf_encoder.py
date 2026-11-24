@@ -1,5 +1,7 @@
 """Translate N-Queens constraints into clauses understood by a SAT solver."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from itertools import combinations
 

@@ -1,5 +1,7 @@
 """Interactive N-Queens solver."""
 
+from __future__ import annotations
+
 import queue
 import sys
 import threading
@@ -10,6 +12,8 @@ from tkinter import ttk
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from task1.min_conflicts import MinConflictsSolver, RandomConflictedSelector, TabuMaxConflictSelector
 from task1.sat_solver import Glucose3NQueenSolver
+
+UI_FONT = "Helvetica" if sys.platform == "darwin" else ("Segoe UI" if sys.platform == "win32" else "DejaVu Sans")
 
 
 class QueenWindow:
@@ -30,12 +34,12 @@ class QueenWindow:
         style.theme_use("clam")
         style.configure("App.TFrame", background="#f5f4eb")
         style.configure("Title.TLabel", background="#f5f4eb", foreground="#3f5135",
-                        font=("Segoe UI", 23, "bold"))
+                        font=(UI_FONT, 23, "bold"))
         style.configure("App.TLabel", background="#f5f4eb", foreground="#596e4b",
-                        font=("Segoe UI", 10))
+                        font=(UI_FONT, 10))
         style.configure("Status.TLabel", background="#f5f4eb", foreground="#3f5135",
-                        font=("Segoe UI", 11, "bold"))
-        style.configure("Solve.TButton", font=("Segoe UI", 10, "bold"), padding=(20, 8),
+                        font=(UI_FONT, 11, "bold"))
+        style.configure("Solve.TButton", font=(UI_FONT, 10, "bold"), padding=(20, 8),
                         background="#769456", foreground="white", borderwidth=0)
         style.map("Solve.TButton", background=[("active", "#627f46"), ("disabled", "#a8b59c")])
 

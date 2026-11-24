@@ -321,21 +321,22 @@ class KakuroSolver:
         if self.mode != SolverMode.BT_MAC_HEURISTICS or len(values) <= 1:
             return values
 
-        # Estimate LCV by applying the same propagation to a private trial state.
-        # Trial pruning is not counted in search statistics or visualized.
+        # Estimate LCV via 1-hop Forward Checking on neighboring unassigned cells
+        # in the two intersecting runs (avoids duplicating full multi-hop AC-3 per candidate).
+        relevant_positions = [p for p in csp.peers[pos] if p not in assignment]
+
         def constraining_impact(val: int) -> Tuple[int, int, int]:
             self._check_cancel()
             if not csp.is_consistent(pos, val, assignment):
                 return (1, 0, val)
             trial_assignment = dict(assignment)
             trial_assignment[pos] = val
-            trial_domains = {p: set(d) for p, d in domains.items()}
+            trial_domains = {p: set(domains[p]) for p in relevant_positions}
             trial_domains[pos] = {val}
-            ok, trial_pruned = ForwardChecker.propagate(csp, pos, val, trial_assignment, trial_domains)
-            if ok:
-                ok, _ = ExtendedAC3Propagator.propagate(csp, trial_assignment, trial_domains, pos, changed_positions=trial_pruned, check_cancel=self._check_cancel)
-            eliminated = sum(len(domains[p]) - len(trial_domains[p])
-                             for p in domains if p not in trial_assignment)
+            ok, _ = ForwardChecker.propagate(csp, pos, val, trial_assignment, trial_domains)
+            eliminated = sum(
+                len(domains[p]) - len(trial_domains[p]) for p in relevant_positions
+            )
             return (0 if ok else 1, eliminated, val)
 
         return sorted(values, key=constraining_impact)

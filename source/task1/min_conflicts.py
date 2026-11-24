@@ -1,5 +1,7 @@
 """Min-conflicts search with interchangeable queen-selection policies."""
 
+from __future__ import annotations
+
 import random
 import time
 from abc import ABC, abstractmethod

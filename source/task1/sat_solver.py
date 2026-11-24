@@ -1,5 +1,7 @@
 """Run the Glucose3 SAT solver on an encoded N-Queens instance."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from time import perf_counter
 

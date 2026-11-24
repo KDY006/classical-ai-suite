@@ -1,5 +1,7 @@
 """Board state for a complete assignment with one queen in every column."""
 
+from __future__ import annotations
+
 import random
 from collections import Counter
 
@@ -55,12 +57,16 @@ class NQueenBoard:
         if not 0 <= col < self.n or not 0 <= new_row < self.n:
             raise ValueError("Square is outside the board")
         old_row = self.queens[col]
+        if old_row == new_row:
+            return
         for counts, old_key, new_key in (
             (self.row_counts, old_row, new_row),
             (self.main_diag_counts, old_row - col, new_row - col),
             (self.anti_diag_counts, old_row + col, new_row + col),
         ):
             counts[old_key] -= 1
+            if counts[old_key] == 0:
+                del counts[old_key]
             counts[new_key] += 1
         self.queens[col] = new_row
 

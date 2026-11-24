@@ -102,10 +102,15 @@ class TankBattleArenaUI:
         )
         self.clock = pygame.time.Clock()
 
-        self.font_title = pygame.font.SysFont("Segoe UI", 22, bold=True)
-        self.font_heading = pygame.font.SysFont("Segoe UI", 15, bold=True)
-        self.font_ui = pygame.font.SysFont("Segoe UI", 14)
-        self.font_small = pygame.font.SysFont("Segoe UI", 12)
+        ui_font = (
+            "Helvetica"
+            if sys.platform == "darwin"
+            else ("Segoe UI" if sys.platform == "win32" else "DejaVu Sans")
+        )
+        self.font_title = pygame.font.SysFont(ui_font, 22, bold=True)
+        self.font_heading = pygame.font.SysFont(ui_font, 15, bold=True)
+        self.font_ui = pygame.font.SysFont(ui_font, 14)
+        self.font_small = pygame.font.SysFont(ui_font, 12)
         self.font_mono = pygame.font.SysFont("Consolas", 12)
 
         self.asset_dir = Path(__file__).resolve().parent / "assets"
@@ -177,11 +182,11 @@ class TankBattleArenaUI:
 
     def _build_controllers(self) -> List[object]:
         controllers: List[object] = [
-            HumanController(),
             HeuristicAlphaBetaAgent(max_depth=4, name="Heuristic Alpha-Beta (d=4)"),
             HeuristicMinimaxAgent(max_depth=3, name="Heuristic Minimax (d=3)"),
             AlphaBetaAgent(max_ply_cap=6, name="Pure Alpha-Beta (cap=6)"),
             MinimaxAgent(max_ply_cap=5, name="Pure Minimax (cap=5)"),
+            HumanController(),
         ]
         controllers.extend(discover_external_agents())
         return controllers
@@ -320,7 +325,7 @@ class TankBattleArenaUI:
         self._draw_text("TANK BATTLE", self.font_title, self.TEXT, (area.x + 22, title_y))
         scenario = self.scenarios[self.scenario_idx]
         self._draw_text(
-            f"{scenario.title}   ·   Turn {self.state.ply}/{self.state.max_plies}",
+            f"{scenario.title}  |  Turn {self.state.ply}/{self.state.max_plies}",
             self.font_ui,
             self.MUTED,
             (area.x + 24, title_y + 32),
@@ -528,7 +533,7 @@ class TankBattleArenaUI:
             controller = self._active_controller(player_id)
             self._add_button(
                 pygame.Rect(button_x, y, half, max(32, int(38 * scale))),
-                f"{'MAX' if player_id == PLAYER_MAX else 'MIN'} · {self._display_controller_name(controller)}",
+                f"{'MAX' if player_id == PLAYER_MAX else 'MIN'}: {self._display_controller_name(controller)}",
                 action_id,
                 highlighted=isinstance(controller, HumanController),
             )
@@ -557,7 +562,7 @@ class TankBattleArenaUI:
         self._draw_text(f"{self.step_delay_ms} ms / turn", self.font_small, self.MUTED, (x, y + 3))
         reload_width = 88
         speed_x = panel.right - 18 - reload_width - 8 - 86
-        self._add_button(pygame.Rect(speed_x, y, 39, 25), "−", "SLOWER")
+        self._add_button(pygame.Rect(speed_x, y, 39, 25), "-", "SLOWER")
         self._add_button(
             pygame.Rect(speed_x + 45, y, 39, 25),
             "+",
@@ -578,7 +583,7 @@ class TankBattleArenaUI:
         ):
             tank = self.state.tanks[player_id]
             base = self.state.bases[player_id]
-            self._draw_text(f"{label} · T", self.font_small, color, (x, y))
+            self._draw_text(f"{label} T", self.font_small, color, (x, y))
             self._draw_hp_bar(pygame.Rect(x + 49, y + 2, max(24, int(width * 0.50)), 8), tank.hp, TANK_INITIAL_HP, color)
             self._draw_text(f"{tank.hp}/{TANK_INITIAL_HP}", self.font_small, self.TEXT, (x + int(width * 0.72), y - 1))
             self._draw_text("Base", self.font_small, self.MUTED, (x, y + 17))
@@ -607,14 +612,14 @@ class TankBattleArenaUI:
                 max_width=card.width - 20,
             )
             self._draw_text(
-                f"{metrics.chosen_action} · d{metrics.depth_reached} · {metrics.elapsed_ms:.1f} ms",
+                f"{metrics.chosen_action} | d{metrics.depth_reached} | {metrics.elapsed_ms:.1f} ms",
                 self.font_mono,
                 self.TEXT,
                 (card.x + 9, card.y + 22),
                 max_width=card.width - 20,
             )
             self._draw_text(
-                f"{metrics.explored_states:,} nodes · {metrics.pruned_branches} cut · TT {metrics.tt_hits}",
+                f"{metrics.explored_states:,} nodes | {metrics.pruned_branches} cut | TT {metrics.tt_hits}",
                 self.font_mono,
                 self.MUTED,
                 (card.x + 9, card.y + 37),
@@ -641,7 +646,7 @@ class TankBattleArenaUI:
             HumanController,
         )
         self._draw_text(
-            "WASD/arrows · Space fire" if is_human_turn else "ESC to quit",
+            "WASD/arrows | Space fire" if is_human_turn else "ESC to quit",
             self.font_small,
             self.GOLD if is_human_turn else self.MUTED,
             (x, hint_y),
@@ -770,7 +775,10 @@ class TankBattleArenaUI:
         display_text = text
         if max_width is not None:
             while display_text and font.size(display_text)[0] > max_width:
-                display_text = display_text[:-2].rstrip() + "…"
+                if display_text.endswith("..."):
+                    display_text = display_text[:-4].rstrip() + "..."
+                else:
+                    display_text = display_text[:-1].rstrip() + "..."
         surface = font.render(display_text, True, color)
         destination = surface.get_rect()
         if center:

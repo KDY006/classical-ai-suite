@@ -175,13 +175,11 @@ class GameState:
         return WIN_UTILITY if winner == perspective else LOSS_UTILITY
 
     def state_key(self) -> tuple:
-        """Return a canonical key containing every field that affects search outcomes."""
+        """Return a canonical key containing board state fields affecting search outcomes."""
         return (
             self.rows,
             self.cols,
             self.current_player,
-            self.ply,
-            self.max_plies,
             tuple(
                 (pid, tank.row, tank.col, tank.facing, tank.hp)
                 for pid, tank in sorted(self.tanks.items())

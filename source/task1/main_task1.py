@@ -1,5 +1,7 @@
 """Run reproducible SAT and local-search experiments from the command line."""
 
+from __future__ import annotations
+
 import argparse
 import random
 import sys
