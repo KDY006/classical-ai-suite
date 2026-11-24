@@ -24,10 +24,10 @@ def run_cli_evaluation() -> None:
     ]
 
     print("=" * 98)
-    print("TASK 3.2: KAKURO CSP SOLVER EVALUATION ACROSS BOARDS & PROPAGATION CONFIGURATIONS")
+    print("TASK 3.2: KAKURO CSP SOLVER EVALUATION")
     print("=" * 98)
     print(
-        f"{'Puzzle Board':<36} | {'Solver Mode':<34} | {'Vars':>4} | "
+        f"{'Kakuro Board':<36} | {'Algorithm':<34} | {'Vars':>4} | "
         f"{'Nodes':>6} | {'Backtracks':>10} | {'Time (ms)':>9} | {'Valid':>5}"
     )
     print("-" * 98)
@@ -44,13 +44,13 @@ def run_cli_evaluation() -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Task 3: Kakuro CSP Solver & UI")
-    parser.add_argument("--cli", action="store_true", help="Run CLI benchmark across all Kakuro boards")
+    parser = argparse.ArgumentParser(description="Task 3: Kakuro CSP solver and board editor")
+    parser.add_argument("--cli", action="store_true", help="Run benchmark on preset boards")
     parser.add_argument(
         "--headless-screenshot",
         type=str,
         default=None,
-        help="Render a mid-search propagation frame of the 9x9 Kakuro board to a PNG file",
+        help="Save a PNG screenshot of the 9x9 board",
     )
     args = parser.parse_args()
 
@@ -75,7 +75,7 @@ def main() -> None:
                 break
         ui.save_screenshot(Path(args.headless_screenshot))
         pygame.quit()
-        print(f"Saved Kakuro Visualizer screenshot to {args.headless_screenshot}")
+        print(f"Screenshot saved to {args.headless_screenshot}")
         return
 
     from task3.visualizer_ui import KakuroVisualizerUI

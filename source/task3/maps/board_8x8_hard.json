@@ -1,6 +1,6 @@
 {
   "name": "Hard Benchmark Board (8x8)",
-  "description": "8x8 Kakuro stability test board (38 white cells).",
+  "description": "8x8 Kakuro stability test board (41 white cells).",
   "grid": [
     [
       "B",
