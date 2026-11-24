@@ -20,7 +20,7 @@ Emails: \{student1, student2, student3, student4\}@student.tdtu.edu.vn, nguyenth
 \maketitle
 
 \begin{abstract}
-This paper presents a complete object-oriented design and experimental evaluation of three foundational Artificial Intelligence paradigms developed for Course 503043. In Task 1, we formulate the $N$-Queen problem in Propositional Logic, derive a closed-form Conjunctive Normal Form (CNF) encoding solved via the \texttt{Glucose3} CDCL solver, and propose a \emph{Max-Conflict with Short-Term Tabu and Aspiration} variable-selection heuristic that reduces repair steps by up to $49\%$ compared with standard Min-Conflicts. In Task 2, we formalize a turn-based Tank Battle game with persistent 3-cell-per-cycle projectile physics as a Zero-Sum Game, benchmark four adversarial search configurations (Minimax, Alpha-Beta, Heuristic Minimax, and Heuristic Alpha-Beta with Move Ordering and Transposition Tables), and build a modular PyGame arena supporting dynamic external bot plugins. In Task 3, we model Kakuro puzzles as Constraint Satisfaction Problems (CSPs) combining Sum-Partition preprocessing, Extended AC-3 propagation, and MRV/Degree/LCV heuristics, solving the complex $9\times 9$ benchmark (48 variables) with zero backtracks alongside an interactive domain-visualization UI. All project requirements are completed at $100\%$.
+This paper presents an object-oriented design and experimental evaluation of three foundational Artificial Intelligence paradigms developed for Course 503043. In Task 1, we formulate the $N$-Queen problem in Propositional Logic, derive a Conjunctive Normal Form (CNF) encoding solved via the \texttt{Glucose3} solver, and compare standard Min-Conflicts with a Max-Conflict variable-selection heuristic using Tabu and aspiration. In Task 2, we formalize a turn-based Tank Battle game with persistent 3-cell-per-cycle projectile physics as a Zero-Sum Game, benchmark four adversarial search configurations (Minimax, Alpha-Beta, Heuristic Minimax, and Heuristic Alpha-Beta with Move Ordering and Transposition Tables), and build a modular PyGame arena supporting dynamic external bot plugins. In Task 3, we model Kakuro puzzles as Constraint Satisfaction Problems (CSPs) combining Sum-Partition preprocessing, Extended AC-3 propagation, and MRV/Degree/LCV heuristics, solving the complex $9\times 9$ benchmark (48 variables) with zero backtracks alongside an interactive domain-visualization UI.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -42,7 +42,7 @@ Applying standard CNF conversion eliminates implication ($P_{r_1,c_1} \Rightarro
 \end{equation}
 
 \subsection{Glucose3 SAT Experiments and Proposed Tabu Min-Conflicts}
-Using \texttt{Glucose3} \cite{audemard2009glucose,ignatiev2018pysat}, we evaluate $N \in [4, 60]$. As shown in Fig.~\ref{fig:task1_sat}, $|C_{\text{CNF}}|$ scales cubically as $\mathcal{O}(N^3)$ (reaching $203{,}450$ clauses at $N=50$), while conflict-driven clause learning solves $N=50$ in $\approx 120$~ms.
+Using \texttt{Glucose3} \cite{audemard2009glucose,ignatiev2018pysat}, we evaluate selected sizes from $N=4$ to $N=60$. As shown in Fig.~\ref{fig:task1_sat}, $|C_{\text{CNF}}|$ scales cubically as $\mathcal{O}(N^3)$ and reaches $203{,}450$ clauses at $N=50$. On the measured machine, solver initialization, clause loading, solving and model extraction together take 67.66 ms for $N=50$.
 
 \begin{figure}[t]
     \centering
@@ -51,7 +51,7 @@ Using \texttt{Glucose3} \cite{audemard2009glucose,ignatiev2018pysat}, we evaluat
     \label{fig:task1_sat}
 \end{figure}
 
-For Local Search, we represent complete states as 1D column permutations $\text{queens}[c] = r$ with $\mathcal{O}(1)$ incremental frequency tables for rows and diagonals \cite{minton1992minconflicts}. Because naive Max-Conflict variable selection cycles between two queens on plateaus, we propose \textbf{Max-Conflict + Short-Term Tabu Tenure} ($k = \max(2, \min(8, \lfloor 0.12N \rfloor))$) with an \emph{Aspiration Criterion} that overrides tabu restrictions whenever a single move resolves all remaining board conflicts, paired with stagnation diversification. Across 30 shared random seeds per $N$ (Fig.~\ref{fig:task1_mc}), our heuristic cuts repair steps from $124.1 \to 62.5$ at $N=64$ and reduces wall-clock time consistently for $N \ge 32$.
+For Local Search, we represent complete states as an array $\text{queens}[c] = r$ with one queen per column and incremental frequency tables for rows and diagonals \cite{minton1992minconflicts}. Our heuristic selects a maximally conflicted queen, avoids recently selected columns using a short-term Tabu list, and permits a Tabu move that can resolve all remaining conflicts. After 16 stagnant steps it clears the list and selects a random conflicted queen. We compare both methods on 30 shared initial boards per size with a limit of 2,500 steps (Fig.~\ref{fig:task1_mc}). At $N=64$, both succeed in all trials and average 107.2 and 63.3 steps, respectively. At $N=8$, the standard and proposed methods succeed in 100\% and 93.3\% of trials. Average steps and times include unsuccessful runs. Results depend on the machine and random seeds.
 
 \begin{figure}[t]
     \centering

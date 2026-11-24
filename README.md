@@ -74,7 +74,8 @@ AI_final_<Project_Group_ID>_<Student_ID>/
     │   ├── sat_solver.py               # Lớp Glucose3NQueenSolver giải CNF bằng PySAT Glucose3
     │   ├── min_conflicts.py            # Lớp MinConflictsSolver (bản chuẩn & bản Max-Conflict + Tabu)
     │   ├── main_task1.py               # Chương trình chạy thực nghiệm nhanh Task 1 trên dòng lệnh
-    │   └── experiments_task1.ipynb     # Jupyter Notebook thực nghiệm & biểu đồ Task 1 (giữ nguyên output)
+    │   ├── gui.py                      # Giao diện bàn cờ N-Queen
+    │   └── experiments_task1.ipynb     # Notebook thực nghiệm Task 1
     ├── task2/                          # TASK 2: Trò chơi Tank Battle (Tìm kiếm đối kháng & PyGame)
     │   ├── config.py                   # Hằng số trò chơi (Tank=6 HP, Base=9 HP, Wall=3 HP, Speed=3)
     │   ├── engine/
@@ -120,6 +121,12 @@ Bạn có thể đứng tại thư mục gốc của dự án để chạy các 
 ---
 
 ### 3.1. Chạy Task 1: Bài Toán N-Queen (`Glucose3` SAT & `Min-Conflicts`)
+
+Mở giao diện bàn cờ:
+
+```bash
+python source/task1/gui.py
+```
 
 #### A. Chạy chương trình thực nghiệm dòng lệnh (CLI)
 ```bash
