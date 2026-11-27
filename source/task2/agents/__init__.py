@@ -1,4 +1,4 @@
-"""Tank Battle agents and external bot discovery."""
+"""Cac tac tu tim kiem doi khang va trinh nap dong bot nhom ngoai cho Task 2."""
 
 from .alphabeta_agent import AlphaBetaAgent
 from .base_agent import (
@@ -6,6 +6,7 @@ from .base_agent import (
     DictAdapterTankAgent,
     SearchMetrics,
     discover_external_agents,
+    to_ascii_label,
 )
 from .evaluation import TacticalEvaluator
 from .heuristic_ab import EXACT, LOWER, TTEntry, UPPER, HeuristicAlphaBetaAgent
@@ -17,6 +18,7 @@ __all__ = [
     "DictAdapterTankAgent",
     "SearchMetrics",
     "discover_external_agents",
+    "to_ascii_label",
     "TacticalEvaluator",
     "MinimaxAgent",
     "AlphaBetaAgent",

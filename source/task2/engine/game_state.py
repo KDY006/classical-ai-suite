@@ -1,4 +1,4 @@
-"""Immutable, validated state representation for Tank Battle."""
+"""Bieu dien trang thai bat bien cho Tro choi Tong bang khong Dau Tang."""
 
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ Position = Tuple[int, int]
 
 @dataclass(frozen=True, slots=True, init=False)
 class GameState:
-    """A defensive immutable snapshot of a complete two-player game position."""
+    """Ban chup trang thai bat bien bao ve toan ven du lieu truoc bot nhom ngoai."""
 
     rows: int
     cols: int
@@ -52,13 +52,13 @@ class GameState:
         max_plies: int = 120,
     ) -> None:
         if rows <= 0 or cols <= 0:
-            raise ValueError("Board dimensions must be positive.")
+            raise ValueError("Kich thuoc ban do phai la so nguyen duong")
         if current_player not in PLAYER_IDS:
-            raise ValueError(f"Unknown current player: {current_player}")
+            raise ValueError(f"Nguoi choi hien tai khong hop le: {current_player}")
         if ply < 0 or max_plies < 0:
-            raise ValueError("Ply values cannot be negative.")
+            raise ValueError("Chi so luot ply va max_plies khong duoc am")
         if set(tanks) != set(PLAYER_IDS) or set(bases) != set(PLAYER_IDS):
-            raise ValueError("A state must contain one tank and one base for each player.")
+            raise ValueError("Trang thai phai co dung 1 xe tang va 1 can cu cho moi phe")
 
         tank_copy = dict(tanks)
         base_copy = dict(bases)
@@ -68,23 +68,23 @@ class GameState:
 
         for player_id in PLAYER_IDS:
             if tank_copy[player_id].player_id != player_id:
-                raise ValueError(f"Tank mapping does not match player {player_id}.")
+                raise ValueError(f"Thong tin xe tang khong khop phe {player_id}")
             if base_copy[player_id].player_id != player_id:
-                raise ValueError(f"Base mapping does not match player {player_id}.")
+                raise ValueError(f"Thong tin can cu khong khop phe {player_id}")
 
-        positions = [
-            (tank.row, tank.col) for tank in tank_copy.values()
-        ] + [
-            (base.row, base.col) for base in base_copy.values()
-        ] + list(wall_copy) + list(steel_copy) + [
-            (bullet.row, bullet.col) for bullet in bullet_copy
-        ]
+        positions = (
+            [(tank.row, tank.col) for tank in tank_copy.values()]
+            + [(base.row, base.col) for base in base_copy.values()]
+            + list(wall_copy)
+            + list(steel_copy)
+            + [(bullet.row, bullet.col) for bullet in bullet_copy]
+        )
         if any(not (0 <= row < rows and 0 <= col < cols) for row, col in positions):
-            raise ValueError("Every entity and bullet must be inside the board.")
+            raise ValueError("Moi thuc the va vien dan phai nam trong bien ban do")
         if any(wall.row != pos[0] or wall.col != pos[1] for pos, wall in wall_copy.items()):
-            raise ValueError("Brick wall keys must match their entity coordinates.")
+            raise ValueError("Khoa toa do tuong gach khong khop voi thuc the tuong ung")
         if len({bullet.owner_id for bullet in bullet_copy}) != len(bullet_copy):
-            raise ValueError("Each tank may have at most one active bullet.")
+            raise ValueError("Moi xe tang chi duoc co toi da mot vien dan dang bay")
 
         object.__setattr__(self, "rows", rows)
         object.__setattr__(self, "cols", cols)
@@ -98,7 +98,7 @@ class GameState:
         object.__setattr__(self, "max_plies", max_plies)
 
     def clone(self) -> GameState:
-        """Return this snapshot; its entities and collections are immutable."""
+        """Tra ve ban chup hien tai do toan bo truong va tap hop deu bat bien."""
         return self
 
     @staticmethod
@@ -107,7 +107,7 @@ class GameState:
             return PLAYER_MIN
         if player_id == PLAYER_MIN:
             return PLAYER_MAX
-        raise ValueError(f"Unknown player ID: {player_id}")
+        raise ValueError(f"Ma nguoi choi khong hop le: {player_id}")
 
     def in_bounds(self, row: int, col: int) -> bool:
         return 0 <= row < self.rows and 0 <= col < self.cols
@@ -116,6 +116,7 @@ class GameState:
         return any(bullet.owner_id == player_id for bullet in self.bullets)
 
     def is_cell_walkable(self, row: int, col: int) -> bool:
+        """Kiem tra o (row, col) co trong de xe tang di chuyen vao hay khong."""
         if not self.in_bounds(row, col) or (row, col) in self.steel_walls:
             return False
         wall = self.brick_walls.get((row, col))
@@ -129,10 +130,10 @@ class GameState:
         )
 
     def legal_actions(self, player_id: Optional[int] = None) -> list[str]:
-        """Return legal, non-redundant actions for the requested player."""
+        """Tra ve tap hanh dong hop le, loai bo hanh dong du thua cho nguoi choi."""
         pid = self.current_player if player_id is None else player_id
         if pid not in PLAYER_IDS:
-            raise ValueError(f"Unknown player ID: {pid}")
+            raise ValueError(f"Ma nguoi choi khong hop le: {pid}")
         if self.is_terminal():
             return [STAY]
 
@@ -149,7 +150,7 @@ class GameState:
         return actions
 
     def winner(self) -> Optional[int]:
-        """Return MAX/MIN, 0 for draw or timeout, or None while ongoing."""
+        """Tra ve MAX/MIN neu thang, 0 neu hoa hoac het luot, None neu dang dau."""
         max_alive = self.tanks[PLAYER_MAX].hp > 0 and self.bases[PLAYER_MAX].hp > 0
         min_alive = self.tanks[PLAYER_MIN].hp > 0 and self.bases[PLAYER_MIN].hp > 0
         if not max_alive and not min_alive:
@@ -166,15 +167,16 @@ class GameState:
         return self.winner() is not None
 
     def utility(self, perspective: int = PLAYER_MAX) -> float:
+        """Ham tien ich tong bang khong (+1000 thang, -1000 thua, 0 hoa)."""
         if perspective not in PLAYER_IDS:
-            raise ValueError(f"Unknown utility perspective: {perspective}")
+            raise ValueError(f"Goc nhin tinh tien ich khong hop le: {perspective}")
         winner = self.winner()
         if winner is None or winner == 0:
             return DRAW_UTILITY
         return WIN_UTILITY if winner == perspective else LOSS_UTILITY
 
     def state_key(self) -> tuple:
-        """Return a canonical key containing board state fields affecting search outcomes."""
+        """Tao khoa bam chuan tac cho bang Transposition Table va phat hien lap."""
         return (
             self.rows,
             self.cols,
@@ -198,7 +200,7 @@ class GameState:
         )
 
     def to_observation_dict(self) -> dict:
-        """Create a fresh, mutable observation that cannot mutate this state."""
+        """Xuat tu dien quan sat doc lap de truyen an toan cho bot chuan Dict."""
         return {
             "rows": self.rows,
             "cols": self.cols,

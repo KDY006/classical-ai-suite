@@ -1,4 +1,4 @@
-"""Agent interfaces, telemetry, and external bot discovery."""
+"""Lop co so OOP cho tac tu xe tang, thong so tim kiem va nap dong bot ngoai."""
 
 from __future__ import annotations
 
@@ -6,6 +6,7 @@ import abc
 import importlib.util
 import inspect
 import time
+import unicodedata
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Optional
@@ -14,8 +15,19 @@ from ..config import ALL_ACTIONS, STAY
 from ..engine.game_state import GameState
 
 
+def to_ascii_label(text: str) -> str:
+    """Chuyen chuoi tieng Viet co dau sang khong dau ASCII an toan cho CLI."""
+    replaced = text.replace("đ", "d").replace("Đ", "D")
+    normalized = unicodedata.normalize("NFD", replaced)
+    return "".join(ch for ch in normalized if unicodedata.category(ch) != "Mn").encode(
+        "ascii", "ignore"
+    ).decode("ascii")
+
+
 @dataclass(slots=True)
 class SearchMetrics:
+    """Thong so do luong hieu nang sau moi luot ra quyet dinh cua tac tu."""
+
     explored_states: int = 0
     elapsed_ms: float = 0.0
     depth_reached: int = 0
@@ -26,19 +38,20 @@ class SearchMetrics:
 
 
 class BaseTankAgent(abc.ABC):
-    """Common interface for internal and external Tank Battle controllers."""
+    """Giao dien OOP dung chung cho moi tac tu noi bo va bot cua nhom khac."""
 
-    def __init__(self, name: str) -> None:
-        self.name = name
-        self.last_metrics = SearchMetrics()
+    def __init__(self, name: str, cli_name: Optional[str] = None) -> None:
+        self.name: str = name
+        self.cli_name: str = cli_name if cli_name is not None else to_ascii_label(name)
+        self.last_metrics: SearchMetrics = SearchMetrics()
 
     @abc.abstractmethod
     def choose_action(self, state: GameState) -> str:
-        """Choose one of ALL_ACTIONS for state.current_player."""
+        """Chon mot hanh dong thuoc ALL_ACTIONS cho state.current_player."""
 
     @staticmethod
     def _terminal_value(state: GameState, root_player: int, depth: int) -> float:
-        """Return zero-sum terminal payoff with slight depth discount preferring faster wins."""
+        """Gia tri ket thuc tong bang khong, uu tien thang som va keo dai khi thua."""
         value = state.utility(root_player)
         if value > 0:
             return value - 0.01 * depth
@@ -47,7 +60,7 @@ class BaseTankAgent(abc.ABC):
         return value
 
     def safe_choose_action(self, state: GameState) -> str:
-        """Run the bot against an immutable defensive snapshot."""
+        """Chay tac tu tren ban chup bat bien, chan ngoai le va hanh dong sai."""
         protected_state = state.clone()
         started = time.perf_counter()
         try:
@@ -68,10 +81,15 @@ class BaseTankAgent(abc.ABC):
 
 
 class DictAdapterTankAgent(BaseTankAgent):
-    """Adapter for a standalone get_action(obs_dict) bot."""
+    """Bo chuyen doi cho bot nhom ngoai viet dang ham doc lap get_action(obs)."""
 
-    def __init__(self, name: str, function: Callable[[dict], str]) -> None:
-        super().__init__(name=name)
+    def __init__(
+        self,
+        name: str,
+        function: Callable[[dict], str],
+        cli_name: Optional[str] = None,
+    ) -> None:
+        super().__init__(name=name, cli_name=cli_name)
         self._function = function
 
     def choose_action(self, state: GameState) -> str:
@@ -91,7 +109,7 @@ class DictAdapterTankAgent(BaseTankAgent):
 
 
 def discover_external_agents(directory: Optional[Path] = None) -> list[BaseTankAgent]:
-    """Discover OOP and dict-protocol bots in external_agents/*.py."""
+    """Quet va nap dong cac bot nhom ngoai chuan OOP hoac chuan Dict trong external_agents/."""
     plugin_dir = directory or (Path(__file__).resolve().parent / "external_agents")
     if not plugin_dir.exists():
         return []
@@ -131,8 +149,15 @@ def discover_external_agents(directory: Optional[Path] = None) -> list[BaseTankA
             if not oop_found:
                 function = getattr(module, "get_action", None)
                 if callable(function):
-                    label = getattr(module, "BOT_NAME", f"Ext:{py_file.stem}")
-                    agents.append(DictAdapterTankAgent(str(label), function))
+                    label = str(getattr(module, "BOT_NAME", f"Bot ngoai: {py_file.stem}"))
+                    cli_label = getattr(module, "BOT_CLI_NAME", None)
+                    agents.append(
+                        DictAdapterTankAgent(
+                            name=label,
+                            function=function,
+                            cli_name=str(cli_label) if cli_label is not None else None,
+                        )
+                    )
         except Exception:
             continue
     return agents

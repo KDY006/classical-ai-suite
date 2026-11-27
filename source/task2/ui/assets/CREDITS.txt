@@ -1,5 +1,0 @@
-Tank Battle UI sprites:
-
-Source: Kenney, Top-down Tanks Redux
-https://kenney.nl/assets/top-down-tanks-redux
-License: CC0 1.0 Public Domain

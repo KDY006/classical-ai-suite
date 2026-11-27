@@ -1,0 +1,447 @@
+# BÁO CÁO ĐỒ ÁN CUỐI KỲ (NHIỆM VỤ 4) — MẪU HỘI NGHỊ IEEE 2 CỘT & MÃ NGUỒN IMPORT OVERLEAF
+
+> **Học phần:** 503043 – Nhập môn Trí tuệ Nhân tạo (Introduction to Artificial Intelligence) — Khoa Công nghệ Thông tin, Trường Đại học Tôn Đức Thắng.  
+> **Đồng bộ mã nguồn:** Khớp 100% với mã nguồn OOP của cả 3 nhiệm vụ (`source/task1/`, `source/task2/`, `source/task3/`), các tài liệu tổng hợp [TASK1.md](file:///d:/3.1.%20AI/Final/TASK1.md), [TASK2.md](file:///d:/3.1.%20AI/Final/TASK2.md), [TASK3.md](file:///d:/3.1.%20AI/Final/TASK3.md), quy chuẩn [UI.md](file:///d:/3.1.%20AI/Final/UI.md) và mã nguồn LaTeX trong [report/main.tex](file:///d:/3.1.%20AI/Final/report/main.tex), [report/references.bib](file:///d:/3.1.%20AI/Final/report/references.bib).  
+> **Tiêu chuẩn biên dịch Overleaf:** `IEEEtran` `[conference]` 2 cột, tiếng Việt `utf8 + T5 + babel-vietnamese` chạy trên trình biên dịch mặc định **pdfLaTeX**, tích hợp đầy đủ **8 hình minh họa** (gồm cả 3 ảnh chụp giao diện PyGame tối giản cho Task 1, Task 2 và Task 3) + **3 bảng số liệu**, độ dài ước tính **4.1 trang** (đạt nghiêm ngặt giới hạn $\le 5$ trang của [DEBAI.md](file:///d:/3.1.%20AI/Final/DEBAI.md)).
+
+---
+
+## Phần 1. Hướng Dẫn Nhanh Import Vào Overleaf Để Biên Dịch `report.pdf`
+
+### Cách 1 — Tải trực tiếp thư mục `report/` (Khuyến nghị — có sẵn đủ 8 hình ảnh)
+1. Nén toàn bộ nội dung bên trong thư mục `report/` (`main.tex`, `references.bib` và thư mục `figures/` gồm **8 ảnh PNG**) thành 1 tệp `.zip` (ví dụ `overleaf_report.zip`).
+2. Mở [Overleaf](https://www.overleaf.com/) $\rightarrow$ **New Project $\rightarrow$ Upload Project** và tải tệp `.zip`.
+3. Kiểm tra **Menu** (góc trên bên trái):
+   - **Compiler:** `pdfLaTeX` *(mặc định — đã kiểm toán `0` lỗi cú pháp và `0` ký tự ngoài bảng mã `T5`)*.
+   - **Main document:** `main.tex`.
+4. Nhấn **Recompile**, xác nhận tổng số trang $\le 5$ trang, tải xuống và lưu đè thành `report.pdf` tại thư mục gốc dự án.
+
+### Cách 2 — Copy–Paste trực tiếp từ tệp `report.md` này
+1. Tạo dự án trống (**New Project $\rightarrow$ Blank Project**) trên Overleaf.
+2. Dán nguyên văn **Phần 3 (`main.tex`)** vào `main.tex` và **Phần 4 (`references.bib`)** vào tệp `references.bib` cùng cấp.
+3. Tạo thư mục `figures/` trên Overleaf và tải lên đủ **8 ảnh PNG** từ `report/figures/`:
+   - **Task 1:** `task1_glucose3_scaling.png`, `task1_min_conflicts_comparison.png`, `task1_nqueen_ui.png`
+   - **Task 2:** `task2_four_algo_comparison.png`, `task2_tier2_9x9_vs_11x11.png`, `task2_arena_ui.png`
+   - **Task 3:** `task3_csp_benchmark.png`, `task3_kakuro_ui.png`
+4. Chọn Compiler **pdfLaTeX** và nhấn **Recompile**.
+
+---
+
+## Phần 2. Bản Đọc Toàn Văn Báo Cáo (Tiếng Việt — Dùng Để Rà Soát Nhanh)
+
+### Tiêu đề (Title)
+**Giải Quyết Các Bài Toán Trí Tuệ Nhân Tạo Cổ Điển Bằng Logic Mệnh Đề, Tìm Kiếm Đối Kháng Và Thỏa Mãn Ràng Buộc**
+
+### Tác giả (Authors — Giảng viên hướng dẫn ở vị trí tác giả cuối cùng)
+- **Nguyễn Văn Duy** (`52400010`) — `52400010@student.tdtu.edu.vn`
+- **Lê Văn Quý** (`52400153`) — `52400153@student.tdtu.edu.vn`
+- **Huỳnh Thiên Đức** (`5240110`) — `5240110@student.tdtu.edu.vn`
+- **Lê Tiến Đạt** (`52400105`) — `52400105@student.tdtu.edu.vn`
+- **TS. Trịnh Hùng Cường** *(Giảng viên hướng dẫn — tác giả cuối cùng)* — `trinhhungcuong@tdtu.edu.vn`
+- *Đơn vị:* Khoa Công nghệ Thông tin, Trường Đại học Tôn Đức Thắng, TP. Hồ Chí Minh, Việt Nam.
+
+### Tóm tắt (Abstract)
+Báo cáo trình bày mô hình hóa hình thức, kiến trúc Lập trình hướng đối tượng (OOP) tách rời tuyệt đối tầng lõi thuật toán và giao diện (Model–View), hệ thống **ba giao diện PyGame tối giản** (`1160 × 720`, bảng màu `3` tông chuẩn `UI.md`) và kết quả thực nghiệm cho ba bài toán nền tảng học phần **503043**, tương thích môi trường chấm bài **macOS 13.7.8 (Intel Core i5)**:
+- **Nhiệm vụ 1 (*N-Queen*):** Mô hình Logic mệnh đề chuyển đổi CNF giải bằng `Glucose3` ($N \in [4, 80]$, `840.720` mệnh đề tại $N=80$), heuristic đề xuất *Max-Conflict + Tabu thích nghi* đạt `100%` thành công trên $N \in [8, 200]$ (giảm tới `74,6%` bước sửa) cùng giao diện trực quan từng bước `MinimalNQueenUI` (`ui_nqueen.py`).
+- **Nhiệm vụ 2 (*Đấu Tăng*):** Trò chơi Tổng bằng không trên `GameState` bất biến và vật lý đạn `3` ô từng bước; thực nghiệm 2 tầng đối sánh 4 cấu hình (giảm tới `890` lần trạng thái ở Tầng 1 và `89,5%` trên `9×9`), kèm đấu trường vector `TankBattleArenaUI` (`pygame_arena.py`) hỗ trợ nạp nóng bot nhóm ngoài.
+- **Nhiệm vụ 3 (*Kakuro CSP*):** Mô hình $\langle X, D, C \rangle$ kết hợp tiền xử lý tổ hợp tổng, `AC-3` mở rộng (GAC) và bộ ba heuristic `MRV/Bậc/LCV`, giải đúng `100%` bốn bảng (`5×5` đến `9×9`, tối đa `48` biến) với `0` lần quay lui cùng giao diện đa luồng `KakuroVisualizerUI` tích hợp `BoardEditor`.
+- **Tổng kết:** Cả 4 nhiệm vụ hoàn thiện **100%**, đạt trọn vẹn **33/33** tiêu chí kiểm chứng tự động (`5/5` Task 1, `6/6` Task 2, `22/22` Task 3).
+
+### Mục I. Nhiệm Vụ 1 — Bài Toán N Quân Hậu Với Logic Mệnh Đề Và Tìm Kiếm Cục Bộ
+1. **Kiến trúc OOP & Mô hình CNF (`base_solver.py`, `board.py`, `cnf_encoder.py`, `sat_solver.py`):** Lớp trừu tượng `BaseNQueenSolver(ABC)` thống nhất `Glucose3NQueenSolver` và `MinConflictsSolver`; `PropositionalVariableMapper` ánh xạ $\text{id}(r,c) = rN + c + 1$; `NQueenCNFEncoder.discover_constraint_groups()` gom 4 họ tuyến tính trong $\mathcal{O}(N^2)$ sinh ALO + AMO nhị nguyên không cần biến Tseitin, thỏa công thức đóng $|C_{\text{CNF}}(N)| = 2N + N^2(N-1) + N(N-1)(2N-1)/3$ (khớp 100% từ $N=1..25$, phát hiện `UNSAT` tại $N=2, 3$).
+2. **Thực nghiệm `Glucose3` ($N \in [4, 80]$) & `Min-Conflicts` (50 bàn cờ/mức, $N \in [8, 200]$):** `Glucose3` giải $N=50$ (`203.450` mệnh đề) trong `251,49 ms` và $N=80$ (`840.720` mệnh đề) trong `1.426,62 ms` ([task1_glucose3_scaling.png](file:///d:/3.1.%20AI/Final/report/figures/task1_glucose3_scaling.png)). Lớp `AdaptiveTabuMaxConflictSelector` đạt `100%` thành công trên mọi $N$, giảm `74,6%` bước ở $N=8$, `58,7%` ở $N=16$ (nhanh gấp `4,6×`) và `21,7%` ở $N=200$ ([task1_min_conflicts_comparison.png](file:///d:/3.1.%20AI/Final/report/figures/task1_min_conflicts_comparison.png)).
+3. **Giao diện PyGame tối giản `MinimalNQueenUI` (`ui_nqueen.py`):** Tuân thủ `UI.md` (`1160 × 720`, 3 tông màu), vẽ vương miện hậu vector (xanh ngọc hợp lệ, đen an toàn, đỏ gạch xung đột kèm *tia tấn công nét đứt* từ `NQueenBoard.attacking_pairs()` khi $N \le 20$ và viền đậm `2px` đánh dấu cột vừa dời), chọn $N \in [4, 100]$, chuyển 4 thuật toán, hoạt ảnh từng bước/tự chạy tách rời qua generator `iter_solve()`, nút `So sánh` chạy trực tiếp chuẩn vs. đề xuất trên cùng bàn cờ và bảng phân rã `ALO`/`AMO` + thống kê CDCL cho `Glucose3` ([task1_nqueen_ui.png](file:///d:/3.1.%20AI/Final/report/figures/task1_nqueen_ui.png)).
+
+| $N$ | Mệnh đề CNF | Chuẩn (bước) | Max thuần | Tabu đề xuất | Giảm bước |
+| :-: | :-: | :-: | :-: | :-: | :-: |
+| 8 | 744 | 94,42 (98%) | 146,40 (96%) | **23,98 (100%)** | **+74,6%** |
+| 16 | 6.352 | 116,92 (98%) | 253,66 (92%) | **48,26 (100%)** | **+58,7%** |
+| 32 | 52.320 | 81,60 (100%) | 68,60 (100%) | **70,10 (100%)** | +14,1% |
+| 64 | 430.208 | 101,94 (100%) | 92,48 (100%) | **70,28 (100%)** | **+31,1%** |
+| 100 | 1.646.900 | 136,96 (100%) | 120,46 (100%) | **109,28 (100%)** | +20,2% |
+| 150 | 5.572.800 | 172,44 (100%) | 151,62 (100%) | **134,86 (100%)** | +21,8% |
+| 200 | 13.253.600 | 202,76 (100%) | 176,20 (100%) | **158,78 (100%)** | **+21,7%** |
+
+### Mục II. Nhiệm Vụ 2 — Trò Chơi Đấu Tăng Đối Kháng Với Tìm Kiếm Tổng Bằng Không
+1. **Kiến trúc OOP 3 tầng & Hàm lượng giá (`engine/`, `agents/`, `ui/`):** `GameState` bất biến (`frozen=True`, `MappingProxyType`, `frozenset`) bảo toàn `Tank=6`, `Base=9`, `BrickWall=3`, sát thương `1`, 6 hành động và `TankBattleEngine.apply_action()` xử lý đạn bay `3` ô tuần tự từng ô một. Hàm lượng giá phản đối xứng `TacticalEvaluator.evaluate()` dùng `steel_aware_distance()` (BFS né tường thép cache $\mathcal{O}(1)$) cùng điểm lá chắn gạch; `HeuristicAlphaBetaAgent` kết hợp `order_actions()` và bảng băm `TTEntry`.
+2. **Thực nghiệm 2 tầng & Đấu trường PyGame vector (`pygame_arena.py`):** `HeuristicAlphaBetaAgent (d=4)` giảm `890×` số trạng thái ở Tầng 1 (`34` vs `30.278`, `3,84 ms`), giảm `89,5%` ở `9×9` (`12,89 ms/lượt`) và `77,8%` ở `11×11` (`68,07 ms/lượt`), toàn thắng `3/3` trận đầy máu trên *Giao lộ Hỏa lực* ([task2_four_algo_comparison.png](file:///d:/3.1.%20AI/Final/report/figures/task2_four_algo_comparison.png), [task2_tier2_9x9_vs_11x11.png](file:///d:/3.1.%20AI/Final/report/figures/task2_tier2_9x9_vs_11x11.png)). Giao diện `TankBattleArenaUI` vẽ vector tối giản `1160 × 720` (nấc HP tường gạch `3 -> 2 -> 1`, vệt đạn nét đứt, `HumanController`) và nạp nóng bot ngoài qua cả `BaseTankAgent` lẫn `DictAdapterTankAgent` với cách ly `safe_choose_action()` ([task2_arena_ui.png](file:///d:/3.1.%20AI/Final/report/figures/task2_arena_ui.png)).
+
+| Kịch bản | Cấu hình | $d$ | Trạng thái | Cắt tỉa / TT | Thời gian (ms) |
+| :--- | :--- | :-: | :-: | :-: | :-: |
+| Tàn cuộc Đối đầu (`7×7`) | Minimax thuần | 6 | 30.278 | 0 / 0 | 1.355,27 |
+| Tàn cuộc Đối đầu (`7×7`) | Alpha-Beta thuần | 6 | 2.213 | 539 / 0 | 104,71 |
+| Tàn cuộc Đối đầu (`7×7`) | Heuristic Minimax | 4 | 1.004 | 0 / 0 | 96,45 |
+| Tàn cuộc Đối đầu (`7×7`) | **Heuristic Alpha-Beta** | 4 | **34** | **17 / 2** | **3,84** |
+| Cổ điển (`9×9`) | Heuristic Minimax | 4 | 895 | 0 / 0 | 90,65 |
+| Cổ điển (`9×9`) | **Heuristic Alpha-Beta** | 4 | **94** | **34 / 5** | **12,89** |
+| Pháo đài (`11×11`) | Heuristic Minimax | 4 | 1.478 | 0 / 0 | 271,46 |
+| Pháo đài (`11×11`) | **Heuristic Alpha-Beta** | 4 | **328** | **84 / 22** | **68,07** |
+
+### Mục III. Nhiệm Vụ 3 — Câu Đố Kakuro Dưới Dạng Bài Toán Thỏa Mãn Ràng Buộc (CSP)
+1. **Kiến trúc OOP 4 tầng & Lan truyền ràng buộc (`csp_model.py`, `propagation.py`, `solver.py`, `board_editor.py`):** `CellVariable`, `RunConstraint`, `KakuroCSP.sum_invariants()` (`60=60` trên `5×5`; `249=249` trên `9×9`). Tiền xử lý 2 tầng `SumPartitionCatalog` (511 tập con) + `ExtendedAC3Propagator` (GAC) thu gọn `88,9%` tổng miền, đưa `12/12` (`5×5`) và `48/48` (`9×9`) ô về đơn trị ngay trước rẽ nhánh; `KakuroSolver` phối hợp `MRV`, `Degree` và `LCV` 1 bước.
+2. **Thực nghiệm 30 lần lặp & Giao diện `KakuroVisualizerUI` (`visualizer_ui.py`):** `AC-3 mở rộng + MRV/Bậc/LCV` chạm cận dưới lý thuyết $|X|$ nút và `0` quay lui trên cả 4 bảng (giảm `827,8×` nút trên `5×5`, `190,4×` trên `9×9`), còn `Kiểm tra tiến + MRV` đạt thời gian nhanh nhất (`1,15 ms` trên `5×5`, `29,54 ms` trên `9×9`) ([task3_csp_benchmark.png](file:///d:/3.1.%20AI/Final/report/figures/task3_csp_benchmark.png)). Giao diện `1160 × 720` chạy luồng nền `Thread`/`Queue` có cờ hủy `Event` (`SearchCancelled`), trực quan hóa lưới ứng viên `3×3`, gạch chéo đỏ cắt tỉa, cảnh báo quay lui và tích hợp `BoardEditor` (`3×3–9×9`, *Bulk Edit*, sinh gợi ý có nghiệm, JSON I/O), đạt `22/22` kiểm thử tự động ([task3_kakuro_ui.png](file:///d:/3.1.%20AI/Final/report/figures/task3_kakuro_ui.png)).
+
+| Bảng ($\|X\|$) | Chế độ giải | Số nút | Quay lui | TG TB (ms) |
+| :--- | :--- | :-: | :-: | :-: |
+| `5×5` (12) | Quay lui cơ bản | 9.933 | 1.097 | 119,10 |
+| `5×5` (12) | Kiểm tra tiến + MRV | 13 | 1 | **1,15** |
+| `5×5` (12) | **AC-3 mở rộng + MRV/Bậc/LCV** | **12** | **0** | 6,47 |
+| `6×6` (19) | Quay lui cơ bản | 6.145 | 671 | 117,25 |
+| `6×6` (19) | Kiểm tra tiến + MRV | 19 | 0 | **2,48** |
+| `6×6` (19) | **AC-3 mở rộng + MRV/Bậc/LCV** | **19** | **0** | 144,54 |
+| `8×8` (41) | Quay lui cơ bản | 8.645 | 933 | 135,41 |
+| `8×8` (41) | Kiểm tra tiến + MRV | 63 | 22 | **5,50** |
+| `8×8` (41) | **AC-3 mở rộng + MRV/Bậc/LCV** | **41** | **0** | 136,34 |
+| `9×9` (48) | Quay lui cơ bản | 9.141 | 988 | 169,88 |
+| `9×9` (48) | Kiểm tra tiến + MRV | 100 | 52 | **29,54** |
+| `9×9` (48) | **AC-3 mở rộng + MRV/Bậc/LCV** | **48** | **0** | 157,37 |
+
+### Mục IV & V. Đóng Góp Cá Nhân, Tự Đánh Giá & Kết Luận
+- **Nguyễn Văn Duy (`52400010` — 100%):** Nhóm trưởng, kiến trúc OOP chung & chuẩn `UI.md`, hợp nhất Git, kiểm thử macOS 13.7.8, bộ kiểm chứng tự động 3 Task, biên tập báo cáo IEEE & video demo.
+- **Lê Văn Quý (`52400153` — 100%):** Nhiệm vụ 1 (`base_solver.py`, `board.py`, `cnf_encoder.py`, `sat_solver.py`, `min_conflicts.py` + Tabu thích nghi, giao diện PyGame tối giản `ui_nqueen.py`, `experiments_task1.ipynb`).
+- **Huỳnh Thiên Đức (`5240110` — 100%):** Nhiệm vụ 2 (engine bất biến Zero-Sum, đạn 3 ô, 4 cấu hình tìm kiếm đối kháng, lượng giá BFS né tường thép, đấu trường vector `pygame_arena.py`, nạp bot ngoài, `benchmark_task2.ipynb`).
+- **Lê Tiến Đạt (`52400105` — 100%):** Nhiệm vụ 3 (Kakuro CSP, `SumPartitionCatalog`, Forward Checking & AC-3 mở rộng, MRV/Bậc/LCV, giao diện đa luồng `visualizer_ui.py`, `board_editor.py`, `experiments_task3.ipynb`).
+- **Tự đánh giá:** Nhiệm vụ 1 (`3,0/3,0`), Nhiệm vụ 2 (`3,0/3,0`), Nhiệm vụ 3 (`3,0/3,0`), Nhiệm vụ 4 (`1,0/1,0`) $\Rightarrow$ **Tổng: `10,0 / 10,0`**.
+
+---
+
+## Phần 3. Mã Nguồn LaTeX Hoàn Chỉnh `main.tex` (Import Trực Tiếp Vào Overleaf)
+
+```latex
+\documentclass[conference]{IEEEtran}
+\usepackage[utf8]{inputenc}
+\usepackage[T5]{fontenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage[hidelinks,unicode]{hyperref}
+
+\renewcommand{\IEEEkeywordsname}{Từ khóa}
+\setlength{\fboxsep}{0pt}
+\setlength{\fboxrule}{0.4pt}
+\setlength{\textfloatsep}{6pt plus 1.5pt minus 2pt}
+\setlength{\floatsep}{5pt plus 1pt minus 2pt}
+\setlength{\abovecaptionskip}{3pt}
+
+\title{Giải Quyết Các Bài Toán Trí Tuệ Nhân Tạo Cổ Điển Bằng Logic Mệnh Đề, Tìm Kiếm Đối Kháng Và Thỏa Mãn Ràng Buộc}
+
+\author{
+\IEEEauthorblockN{Nguyễn Văn Duy (52400010), Lê Văn Quý (52400153),\\
+Huỳnh Thiên Đức (5240110), Lê Tiến Đạt (52400105), và TS. Trịnh Hùng Cường}
+\IEEEauthorblockA{Khoa Công nghệ Thông tin, Trường Đại học Tôn Đức Thắng, TP. Hồ Chí Minh, Việt Nam\\
+Email: \{52400010, 52400153, 5240110, 52400105\}@student.tdtu.edu.vn, trinhhungcuong@tdtu.edu.vn}
+}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Báo cáo trình bày mô hình hóa hình thức, kiến trúc Lập trình hướng đối tượng (OOP) tách rời tuyệt đối tầng lõi thuật toán và giao diện (Model--View), hệ thống ba giao diện PyGame tối giản ($1160 \times 720$, bảng màu $3$ tông chuẩn) và đánh giá thực nghiệm cho ba bài toán nền tảng học phần 503043 (Nhập môn Trí tuệ Nhân tạo), tương thích hoàn toàn môi trường chấm bài macOS 13.7.8 (Intel Core i5). Ở Nhiệm vụ~1 ($N$-Queen), mô hình Logic mệnh đề chuyển đổi CNF được giải bằng \texttt{Glucose3} trên $N \in [4, 80]$, kết hợp đề xuất heuristic \emph{Max-Conflict + Tabu thích nghi} đạt tỷ lệ thành công $100\%$ trên $N \in [8, 200]$ (giảm tới $74,6\%$ bước sửa) cùng giao diện trực quan từng bước \texttt{MinimalNQueenUI}. Ở Nhiệm vụ~2 (Đấu Tăng), trò chơi Tổng bằng không trên \texttt{GameState} bất biến và vật lý đạn bay $3$~ô từng bước được đối sánh qua thực nghiệm hai tầng với $4$ cấu hình (giảm tới $890$ lần trạng thái ở Tầng~1 và $89,5\%$ trên đấu trường $9\times 9$), đi kèm đấu trường vector \texttt{TankBattleArenaUI} hỗ trợ nạp nóng bot nhóm ngoài. Ở Nhiệm vụ~3 (Kakuro CSP), sự kết hợp tiền xử lý tổ hợp tổng, AC-3 mở rộng (GAC) và bộ ba heuristic MRV/Bậc/LCV giải đúng $100\%$ bốn bảng ($5\times 5$ đến $9\times 9$, tối đa $48$ biến) với $0$ lần quay lui cùng giao diện đa luồng \texttt{KakuroVisualizerUI} tích hợp \texttt{BoardEditor}. Cả bốn nhiệm vụ hoàn thiện $100\%$ và vượt qua $33/33$ tiêu chí kiểm chứng tự động.
+\end{abstract}
+
+\begin{IEEEkeywords}
+Logic mệnh đề, PySAT Glucose3, Min-Conflicts, Tabu thích nghi, Tìm kiếm đối kháng, Alpha-Beta, Kakuro CSP, AC-3 mở rộng, PyGame tối giản.
+\end{IEEEkeywords}
+
+\section{Nhiệm Vụ 1: Bài Toán N Quân Hậu Với Logic Mệnh Đề Và Tìm Kiếm Cục Bộ}
+
+\subsection{Kiến Trúc OOP, Mô Hình Logic Mệnh Đề Và Chuyển Đổi CNF}
+Thư mục \texttt{source/task1/} tuân thủ nguyên lý OOP với lớp trừu tượng \texttt{BaseNQueenSolver(ABC)} định nghĩa giao diện chung (\texttt{name}, \texttt{solve(n)}) cho hai bộ giải \texttt{Glucose3NQueenSolver} và \texttt{MinConflictsSolver}; tầng giao diện \texttt{MinimalNQueenUI} tách biệt hoàn toàn ($0$ lệnh \texttt{import pygame} trong $6$ module lõi).
+
+Trên bàn cờ $N \times N$, lớp \texttt{PropositionalVariableMapper} gán cho mỗi ô $(r, c) \in \{0, \dots, N-1\}^2$ một biến mệnh đề $P_{r,c}$ ánh xạ song ánh sang chỉ số DIMACS $\text{id}(r, c) = rN + c + 1 \in \{1, \dots, N^2\}$ \cite{russell2020aima}. Phương thức \texttt{NQueenCNFEncoder.discover\_constraint\_groups()} duyệt bàn cờ trong $\mathcal{O}(N^2)$ để gom các ô vào bốn họ tuyến tính (hàng $r$, cột $c$, chéo chính $r-c$, chéo phụ $r+c$) và phát sinh hai nhóm tiên đề:
+\begin{enumerate}
+    \item \emph{Tồn tại (At-Least-One -- ALO)}: Mỗi hàng và mỗi cột chứa ít nhất một quân hậu ($\bigvee_{c=0}^{N-1} P_{r,c}$ và $\bigvee_{r=0}^{N-1} P_{r,c}$), ở sẵn dạng chuẩn CNF nhằm tăng lực lan truyền đơn vị.
+    \item \emph{Không tấn công (At-Most-One -- AMO)}: Mọi cặp ô phân biệt $(r_1, c_1) \prec (r_2, c_2)$ cùng hàng, cột hoặc đường chéo sinh phép kéo theo $P_{r_1,c_1} \Rightarrow \neg P_{r_2,c_2}$, khử trực tiếp thành mệnh đề nhị nguyên chuẩn CNF $(\neg P_{r_1,c_1} \vee \neg P_{r_2,c_2})$ mà không cần biến phụ Tseitin.
+\end{enumerate}
+
+Tổng số mệnh đề CNF (khi bật ALO cột) thỏa công thức đóng bậc ba $\mathcal{O}(N^3)$ tại~\eqref{eq:cnf}, đã kiểm chứng khớp $100\%$ từ $N=1..25$ và nhận diện chính xác trạng thái vô nghiệm (\texttt{UNSAT}) tại $N \in \{2, 3\}$:
+\begin{equation}
+|C_{\text{CNF}}(N)| = 2N + N^2(N-1) + \frac{N(N-1)(2N-1)}{3}.
+\label{eq:cnf}
+\end{equation}
+
+\subsection{Thực Nghiệm Glucose3 Và Heuristic Max-Conflict + Tabu Thích Nghi}
+Sử dụng \texttt{Glucose3} của \texttt{PySAT} \cite{audemard2009glucose,ignatiev2018pysat}, thực nghiệm đo trung vị $3$ lần chạy sau warm-up trên $15$ mốc $N \in [4, 80]$ (Hình~\ref{fig:task1_sat}) cho thấy số mệnh đề tăng đúng theo~\eqref{eq:cnf} từ $84$ ($N=4$) lên $203.450$ ($N=50$, giải $251,49$~ms) và $840.720$ ($N=80$, giải $1.426,62$~ms, tổng $2.531,19$~ms). Cơ chế học mệnh đề CDCL duy trì hiệu năng tốt, song chi phí tạo và nạp $\mathcal{O}(N^3)$ mệnh đề chiếm gần một nửa tổng thời gian khi $N \ge 60$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.94\columnwidth]{figures/task1_glucose3_scaling.png}
+    \caption{Tăng trưởng số mệnh đề CNF và phân rã thời gian mã hóa/giải của \texttt{Glucose3} trên dải $N \in [4, 80]$.}
+    \label{fig:task1_sat}
+\end{figure}
+
+Trong tìm kiếm cục bộ \texttt{Min-Conflicts} \cite{minton1992minconflicts}, lớp \texttt{NQueenBoard} biểu diễn trạng thái đầy đủ bằng mảng $\text{queens}[c] = r$ kèm ba mảng đếm tần suất hàng và hai đường chéo, cho phép truy vấn và cập nhật xung đột gia tăng trong $\mathcal{O}(1)$. Để tránh kẹt lặp chu trình của chiến lược chọn cột xung đột cực đại thuần túy (\texttt{PureMaxConflictSelector}), nhóm xây dựng \texttt{AdaptiveTabuMaxConflictSelector} kế thừa \texttt{VariableSelectionStrategy} dựa trên nguyên lý Tabu \cite{glover1989tabu} gồm bốn cơ chế: (i)~chọn cột chưa bị cấm nhiều xung đột nhất, phá hòa theo tuổi chưa di chuyển; (ii)~thời hạn cấm thích nghi $T_{\text{eff}}(k) = \min(\max(2, \min(6, \text{round}(0,10N))), \lfloor k/2 \rfloor)$ theo số cột xung đột $k$ (tự tắt khi $k \le 2$); (iii)~ân xá $\mathcal{O}(1)$ khi nước đi triệt tiêu toàn bộ xung đột ngay; và (iv)~phá cực trị cục bộ chặt bằng cách dịch chuyển một cột chưa xung đột khi khóa ở $1$ cặp xung đột hoặc đình trệ liên tiếp.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.94\columnwidth]{figures/task1_min_conflicts_comparison.png}
+    \caption{Đối sánh $3$ chiến lược \texttt{Min-Conflicts} trên $50$ bàn cờ chung/mức $N \in [8, 200]$ và đường cong hội tụ tại $N=64$.}
+    \label{fig:task1_mc}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Tổng Hợp Thực Nghiệm N-Queen (CNF \& 50 Bàn Cờ Min-Conflicts)}
+\label{tab:nqueen}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{cccccc}
+\toprule
+\textbf{$N$} & \textbf{Mệnh đề CNF} & \textbf{Chuẩn (bước)} & \textbf{Max thuần} & \textbf{Tabu đề xuất} & \textbf{Giảm bước} \\
+\midrule
+8 & 744 & 94,42 (98\%) & 146,40 (96\%) & \textbf{23,98 (100\%)} & \textbf{+74,6\%} \\
+16 & 6.352 & 116,92 (98\%) & 253,66 (92\%) & \textbf{48,26 (100\%)} & \textbf{+58,7\%} \\
+32 & 52.320 & 81,60 (100\%) & 68,60 (100\%) & \textbf{70,10 (100\%)} & +14,1\% \\
+64 & 430.208 & 101,94 (100\%) & 92,48 (100\%) & \textbf{70,28 (100\%)} & \textbf{+31,1\%} \\
+100 & 1.646.900 & 136,96 (100\%) & 120,46 (100\%) & \textbf{109,28 (100\%)} & +20,2\% \\
+150 & 5.572.800 & 172,44 (100\%) & 151,62 (100\%) & \textbf{134,86 (100\%)} & +21,8\% \\
+200 & 13.253.600 & 202,76 (100\%) & 176,20 (100\%) & \textbf{158,78 (100\%)} & \textbf{+21,7\%} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+Trên $50$ bàn cờ khởi tạo chung/mức $N \in [8, 200]$ (giới hạn $2.500$ bước, Bảng~\ref{tab:nqueen}, Hình~\ref{fig:task1_mc}), heuristic đề xuất là chiến lược duy nhất đạt $100\%$ thành công trên mọi $N$, giảm tới $74,6\%$ bước ở $N=8$, $58,7\%$ bước ở $N=16$ (nhanh gấp $4,6$ lần: $2,26$~ms vs. $10,37$~ms) và $21,7\%$ bước ở $N=200$ ($32,69$~ms vs. $61,21$~ms).
+
+\subsection{Giao Diện PyGame Tối Giản Trực Quan Hóa N-Queen}
+Khác với bản chạy dòng lệnh thuần túy, nhóm thiết kế giao diện đồ họa \texttt{MinimalNQueenUI} trong \texttt{ui\_nqueen.py} (Hình~\ref{fig:task1_ui}) tuân thủ chuẩn thiết kế tối giản \texttt{UI.md} ($1160 \times 720$, bảng màu $3$ tông Giấy/Mực -- Xanh ngọc trầm -- Đỏ gạch trầm):
+\begin{itemize}
+    \item \emph{Trực quan bàn cờ và xung đột}: Vẽ biểu tượng vương miện hậu dạng vector sạch; phân biệt rõ hậu hợp lệ (xanh ngọc khi $0$ xung đột), hậu an toàn (mực đen) và hậu đang xung đột (đỏ gạch trên nền đỏ nhạt kèm \emph{tia tấn công nét đứt} từ \texttt{NQueenBoard.attacking\_pairs()} khi $N \le 20$); đóng khung viền đậm $2$~px tại cột vừa di chuyển.
+    \item \emph{Tương tác và tách rời Model--View}: Cho phép chọn nhanh $N \in \{4, 8, 12, 16, 20, 32, 50\}$ hoặc điều chỉnh tự do $N \in [4, 100]$, chuyển $4$ thuật toán (\texttt{Glucose3}, chuẩn, đối chứng, Tabu đề xuất), điều khiển \texttt{Giải ngay}, \texttt{Ngẫu nhiên}, \texttt{Từng bước}, \texttt{Phát/Tạm dừng} (đọc từng \texttt{StepSnapshot} qua generator \texttt{iter\_solve()}), thanh tốc độ $1\text{--}60$~bước/giây và nút \texttt{So sánh} chạy đối chứng trực tiếp bản chuẩn vs. đề xuất trên cùng bàn cờ khởi tạo; khi chọn \texttt{Glucose3}, thanh thông số hiển thị chi tiết phân rã mệnh đề \texttt{ALO}/\texttt{AMO} cùng số quyết định, xung đột và lan truyền CDCL.
+\end{itemize}
+
+\begin{figure}[t]
+    \centering
+    \fbox{\includegraphics[width=0.89\columnwidth]{figures/task1_nqueen_ui.png}}
+    \caption{Giao diện PyGame tối giản \texttt{MinimalNQueenUI} ($1160 \times 720$) trực quan hóa từng bước sửa xung đột với tia tấn công nét đứt và bảng thông số.}
+    \label{fig:task1_ui}
+\end{figure}
+
+\section{Nhiệm Vụ 2: Trò Chơi Đấu Tăng Đối Kháng Với Tìm Kiếm Tổng Bằng Không}
+
+\subsection{Mô Hình Zero-Sum Game, Kiến Trúc Bất Biến Và Hàm Lượng Giá}
+Thư mục \texttt{source/task2/} phân tách thành $3$ tầng OOP: \texttt{engine/} (mô hình và vật lý), \texttt{agents/} ($4$ bộ tìm kiếm đối kháng kế thừa \texttt{BaseTankAgent} cùng \texttt{external\_agents/}) và \texttt{ui/} (\texttt{TankBattleArenaUI}). Trò chơi Đấu Tăng được mô hình hóa thành $\mathcal{G} = \langle S_0, \text{PLAYER}, \text{ACTIONS}, \text{RESULT}, \text{TERMINAL}, \text{UTILITY} \rangle$ \cite{russell2020aima,knuth1975alphabeta} trên lớp \texttt{GameState} bất biến (\texttt{@dataclass(frozen=True)}, \texttt{MappingProxyType}, \texttt{frozenset}) chứa các thực thể \texttt{Tank} ($\text{HP}=6$), \texttt{Base} ($\text{HP}=9$), \texttt{BrickWall} ($\text{HP}=3$), \texttt{SteelWall} và \texttt{Bullet} (sát thương $1$). Phương thức \texttt{TankBattleEngine.apply\_action()} xử lý tập $6$ hành động $\{\texttt{MOVE\_UP}, \texttt{MOVE\_DOWN}, \texttt{MOVE\_LEFT}, \texttt{MOVE\_RIGHT}, \texttt{FIRE}, \texttt{STAY}\}$: di chuyển luôn xoay hướng nòng và tiến $1$~ô nếu trống; đạn tồn tại xuyên lượt, bay tối đa $3$~ô/chu kỳ và kiểm tra va chạm tuần tự từng ô một, dừng ngay tại thực thể đầu tiên. Trạng thái kết thúc trả về tiện ích tổng bằng không $\pm 1000$ hoặc $0$ khi hòa.
+
+Tại các nút cắt độ sâu $d$, hàm lượng giá phản đối xứng \texttt{TacticalEvaluator.evaluate()} theo~\eqref{eq:eval} ($\text{EVAL}(s, \text{MAX}) + \text{EVAL}(s, \text{MIN}) = 0$) dùng khoảng cách BFS né tường thép có cache $\mathcal{O}(1)$ (\texttt{steel\_aware\_distance()}) và điểm lá chắn tường gạch quanh căn cứ:
+\begin{align}
+\text{EVAL}(s, p) &= 130\,\Delta\text{HP}_{\text{tank}} + 165\,\Delta\text{HP}_{\text{base}} + 7,5\,\Delta\text{HP}_{\text{shield}} \nonumber\\
+&\quad + 6\,\Delta d_{\text{BFS}} + \Delta\text{Offense}(s) + 70\,\Delta\text{Threat}(s).
+\label{eq:eval}
+\end{align}
+\texttt{HeuristicAlphaBetaAgent} tích hợp~\eqref{eq:eval} cùng \texttt{order\_actions()} (ưu tiên nước đi tốt nhất từ bảng băm, bắn trúng mục tiêu, né đạn) và bảng băm \texttt{TTEntry} có kiểm tra độ sâu an toàn, bảo toàn chính xác giá trị của \texttt{HeuristicMinimaxAgent}.
+
+\subsection{Thực Nghiệm Hai Tầng, Giải Đấu Và Đấu Trường PyGame Vector}
+Vì ván đầy máu cần $\ge 12$ nửa lượt (ply) mới kết thúc (không gian nhánh $\sim 6^{15}$), thực nghiệm công bằng (trung vị $3$ lần) chia hai tầng: Tầng~1 dùng $3$ kịch bản tàn cuộc $7\times 7$ ($1\text{--}2$~HP, tối đa $6$~ply) để cả bốn cấu hình duyệt hết tới nút kết thúc thật; Tầng~2 đo trên đấu trường đầy máu $9\times 9$ và $11\times 11$ ở $d \in \{2, 3, 4\}$.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.94\columnwidth]{figures/task2_four_algo_comparison.png}
+    \caption{Đối sánh số trạng thái duyệt và thời gian ra quyết định của $4$ cấu hình trên $3$ kịch bản Tầng~1 ($7\times 7$).}
+    \label{fig:task2_bench}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Đối Sánh 4 Cấu Hình Tầng 1 ($7\times 7$) Và Tầng 2 ($9\times 9, 11\times 11$, $d=4$)}
+\label{tab:tank}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llcccc}
+\toprule
+\textbf{Kịch bản} & \textbf{Cấu hình} & \textbf{$d$} & \textbf{Trạng thái} & \textbf{Cắt tỉa/TT} & \textbf{TG (ms)} \\
+\midrule
+\multirow{4}{*}{\shortstack[l]{Tàn cuộc\\Đối đầu ($7\times 7$)}} & Minimax thuần & 6 & 30.278 & 0 / 0 & 1.355,27 \\
+ & Alpha-Beta thuần & 6 & 2.213 & 539 / 0 & 104,71 \\
+ & Heuristic Minimax & 4 & 1.004 & 0 / 0 & 96,45 \\
+ & \textbf{Heuristic Alpha-Beta} & 4 & \textbf{34} & \textbf{17 / 2} & \textbf{3,84} \\
+\midrule
+\multirow{2}{*}{\shortstack[l]{Cổ điển ($9\times 9$)}} & Heuristic Minimax & 4 & 895 & 0 / 0 & 90,65 \\
+ & \textbf{Heuristic Alpha-Beta} & 4 & \textbf{94} & \textbf{34 / 5} & \textbf{12,89} \\
+\midrule
+\multirow{2}{*}{\shortstack[l]{Pháo đài ($11\times 11$)}} & Heuristic Minimax & 4 & 1.478 & 0 / 0 & 271,46 \\
+ & \textbf{Heuristic Alpha-Beta} & 4 & \textbf{328} & \textbf{84 / 22} & \textbf{68,07} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.94\columnwidth]{figures/task2_tier2_9x9_vs_11x11.png}
+    \caption{Tăng trưởng trạng thái duyệt và thời gian ra quyết định trên đấu trường đầy máu $9\times 9$ và $11\times 11$ ở độ sâu $d \in \{2, 3, 4\}$.}
+    \label{fig:task2_tier2}
+\end{figure}
+
+Theo Bảng~\ref{tab:tank}, Hình~\ref{fig:task2_bench} và Hình~\ref{fig:task2_tier2}, trên \emph{Tàn cuộc Đối đầu}, \texttt{AlphaBetaAgent} bảo toàn chính xác giá trị và nước đi tối ưu (\texttt{BẮN}) của \texttt{MinimaxAgent} nhưng giảm $13,7$ lần trạng thái ($30.278 \to 2.213$), còn \texttt{HeuristicAlphaBetaAgent ($d=4$)} chỉ duyệt $34$ trạng thái trong $3,84$~ms (giảm $890$ lần trạng thái, nhanh hơn $353$ lần). Trên Tầng~2 ở $d=4$, cấu hình tối ưu giảm $89,5\%$ trạng thái trên $9\times 9$ ($12,89$~ms/lượt) và $77,8\%$ trên $11\times 11$ ($68,07$~ms/lượt), đồng thời toàn thắng $3/3$ trận đầy máu trên \emph{Giao lộ Hỏa lực} ($9\times 9$) trước \texttt{Heuristic Minimax $d=2$} ($6/9$ vs. $6/0$) và hai bot mẫu nhóm ngoài ($1/9$ vs. $0/9$).
+
+Giao diện \texttt{TankBattleArenaUI} trong \texttt{pygame\_arena.py} (Hình~\ref{fig:task2_ui}) dùng hoàn toàn đồ họa vector tối giản ($1160 \times 720$, không dùng ảnh sprite rời hay API Windows): phe \texttt{MAX} xanh ngọc, phe \texttt{MIN} đỏ gạch, tường gạch hiển thị $3$ nấc HP ($3 \to 2 \to 1$), vệt đạn nét đứt theo từng bước bay, chế độ Người chơi (\texttt{HumanController}) vs. AI, điều khiển chạy tự động/từng bước và cơ chế nạp động bot nhóm khác từ \texttt{external\_agents/} qua cả hai chuẩn kế thừa \texttt{BaseTankAgent} lẫn \texttt{DictAdapterTankAgent} (\texttt{get\_action(obs)}) được bảo vệ bởi lớp cách ly ngoại lệ \texttt{safe\_choose\_action()}.
+
+\begin{figure}[t]
+    \centering
+    \fbox{\includegraphics[width=0.89\columnwidth]{figures/task2_arena_ui.png}}
+    \caption{Giao diện PyGame vector tối giản \texttt{TankBattleArenaUI} ($1160 \times 720$) hiển thị nấc HP tường gạch, vệt đạn bay, nạp bot ngoài và thông số tìm kiếm.}
+    \label{fig:task2_ui}
+\end{figure}
+
+\section{Nhiệm Vụ 3: Câu Đố Kakuro Dưới Dạng Bài Toán Thỏa Mãn Ràng Buộc (CSP)}
+
+\subsection{Mô Hình CSP $\langle X, D, C \rangle$, Lan Truyền Ràng Buộc Và Heuristics}
+Thư mục \texttt{source/task3/} gồm $4$ tầng OOP độc lập (\texttt{csp\_model.py}, \texttt{propagation.py}, \texttt{solver.py}, \texttt{board\_editor.py}) tách rời khỏi \texttt{visualizer\_ui.py}. Câu đố Kakuro được mô hình hóa thành $\mathcal{P} = \langle X, D, C \rangle$ \cite{simonis2008kakuro,mackworth1977consistency}: mỗi ô trắng là một biến \texttt{CellVariable} $X_{(r,c)}$ thuộc đúng một dãy ngang và một dãy dọc ($|X|=12$ trên $5\times 5$; $|X|=48$ trên $9\times 9$), miền khởi tạo $D(X_{(r,c)}) = \{1, \dots, 9\}$ (hoặc đơn trị cho chữ số cho trước), và mỗi đối tượng \texttt{RunConstraint} độ dài $k \in [1, 9]$, tổng $S \in [1, 45]$ áp đặt đồng thời $\text{AllDiff}$ cùng tổng chính xác $\sum X = S$. Mọi bảng hợp lệ đều thỏa bất biến tổng $\sum S_{\text{Across}} = \sum S_{\text{Down}}$ (kiểm tra tức thời qua \texttt{KakuroCSP.sum\_invariants()}: $60=60$ trên $5\times 5$ và $249=249$ trên $9\times 9$).
+
+Lớp \texttt{KakuroSolver} phối hợp hai tầng lan truyền ràng buộc với bộ ba heuristic: (1)~\texttt{SumPartitionCatalog} tiền tính $511$ tập con khác rỗng của $\{1..9\}$ theo khóa $(k, S)$ để giao miền ngang--dọc; (2)~\texttt{ForwardChecker} và \texttt{ExtendedAC3Propagator} duy trì nhất quán cung tổng quát (GAC) theo tổ hợp hỗ trợ kèm cận tổng phần dư chặt --- riêng pha tiền xử lý hai tầng đã cắt giảm $88,9\%$ tổng kích thước miền trên hai bảng đề bài, đưa $12/12$ ô ($5\times 5$) và $48/48$ ô ($9\times 9$) về đơn trị ($|D|=1$) ngay trước bước rẽ nhánh đầu tiên; (3)~bộ ba heuristic \textbf{MRV} (chọn ô ít ứng viên nhất), phá hòa theo \textbf{Bậc} (nhiều hàng xóm chưa gán nhất) và \textbf{LCV} ước lượng $1$ bước bằng \texttt{ForwardChecker}.
+
+\subsection{Thực Nghiệm 30 Lần Lặp Và Giao Diện Trực Quan Kèm Soạn Thảo}
+Đo lặp $30$ lần độc lập sau warm-up (\texttt{record\_steps=False}) trên $4$ bảng JSON đạt tỷ lệ kiểm chứng hợp lệ $100\%$ ở mọi cấu hình (Bảng~\ref{tab:kakuro}, Hình~\ref{fig:task3_bench}). Số liệu cho thấy rõ sự đánh đổi kinh điển giữa \emph{độ mạnh lan truyền} và \emph{chi phí mỗi nút}: \texttt{AC-3 mở rộng + MRV/Bậc/LCV} đạt đúng cận dưới lý thuyết $|X|$ nút và $0$ lần quay lui trên cả $4/4$ bảng (giảm $827,8$ lần số nút trên $5\times 5$ và $190,4$ lần trên $9\times 9$), trong khi \texttt{Kiểm tra tiến + MRV} nhanh nhất về thời gian tường ($1,15$~ms trên $5\times 5$ --- nhanh hơn $103,5$ lần; $29,54$~ms trên $9\times 9$) nhờ chi phí lan truyền cục bộ rất thấp.
+
+\begin{table}[t]
+\centering
+\caption{Hiệu Năng Trung Bình Bộ Giải Kakuro CSP (30 Lần Chạy / Cấu Hình)}
+\label{tab:kakuro}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+\textbf{Bảng ($|X|$)} & \textbf{Chế độ giải} & \textbf{Số nút} & \textbf{Quay lui} & \textbf{TG TB (ms)} \\
+\midrule
+\multirow{3}{*}{$5\times 5$ (12)} & Quay lui cơ bản & 9.933 & 1.097 & 119,10 \\
+ & Kiểm tra tiến + MRV & 13 & 1 & \textbf{1,15} \\
+ & AC-3 mở rộng + MRV/Bậc/LCV & \textbf{12} & \textbf{0} & 6,47 \\
+\midrule
+\multirow{3}{*}{$6\times 6$ (19)} & Quay lui cơ bản & 6.145 & 671 & 117,25 \\
+ & Kiểm tra tiến + MRV & 19 & 0 & \textbf{2,48} \\
+ & AC-3 mở rộng + MRV/Bậc/LCV & \textbf{19} & \textbf{0} & 144,54 \\
+\midrule
+\multirow{3}{*}{$8\times 8$ (41)} & Quay lui cơ bản & 8.645 & 933 & 135,41 \\
+ & Kiểm tra tiến + MRV & 63 & 22 & \textbf{5,50} \\
+ & AC-3 mở rộng + MRV/Bậc/LCV & \textbf{41} & \textbf{0} & 136,34 \\
+\midrule
+\multirow{3}{*}{$9\times 9$ (48)} & Quay lui cơ bản & 9.141 & 988 & 169,88 \\
+ & Kiểm tra tiến + MRV & 100 & 52 & \textbf{29,54} \\
+ & AC-3 mở rộng + MRV/Bậc/LCV & \textbf{48} & \textbf{0} & 157,37 \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.94\columnwidth]{figures/task3_csp_benchmark.png}
+    \caption{Đối sánh số nút duyệt và thời gian giải trung bình ($30$ lần chạy, thang log) của $3$ cấu hình trên $4$ bảng Kakuro.}
+    \label{fig:task3_bench}
+\end{figure}
+
+Giao diện PyGame tối giản \texttt{KakuroVisualizerUI} trong \texttt{visualizer\_ui.py} ($1160 \times 720$, Hình~\ref{fig:task3_ui}) chạy bộ giải trên luồng nền (\texttt{Thread}/\texttt{Queue}) với cờ hủy hợp tác \texttt{Event} (ném \texttt{SearchCancelled} tách biệt khỏi \texttt{UNSAT}), trực quan hóa rõ lưới ứng viên $3\times 3$, dấu gạch chéo đỏ lên ứng viên bị cắt tỉa, viền đậm $2$~px tại ô MRV đang xét, nền/viền đỏ nhạt khi quay lui và dấu $\times$ khi rỗng miền. Hệ thống tích hợp sẵn lớp \texttt{BoardEditor} hỗ trợ tạo bảng $3\times 3\text{--}9\times 9$, đổi loại ô tự đồng bộ gợi ý, nhập nhanh toàn bảng (\emph{Bulk Edit}), sinh bộ tổng ngẫu nhiên có nghiệm và lưu/mở JSON, vượt qua trọn vẹn $22/22$ kiểm thử tự động.
+
+\begin{figure}[t]
+    \centering
+    \fbox{\includegraphics[width=0.89\columnwidth]{figures/task3_kakuro_ui.png}}
+    \caption{Giao diện PyGame tối giản \texttt{KakuroVisualizerUI} ($1160 \times 720$) trực quan hóa miền ứng viên $3\times 3$, gạch chéo đỏ cắt tỉa và trình soạn thảo bảng.}
+    \label{fig:task3_ui}
+\end{figure}
+
+\section{Đóng Góp Cá Nhân Và Tự Đánh Giá}
+
+\subsection{Phân Công Và Mức Độ Hoàn Thành Cá Nhân}
+\begin{itemize}
+    \item \textbf{Nguyễn Văn Duy -- 52400010 (Nhóm trưởng, hoàn thành 100\%)}: Xây dựng kiến trúc OOP chung và bộ quy chuẩn giao diện tối giản \texttt{UI.md}; quản lý nhánh Git, tích hợp và kiểm thử tương thích macOS 13.7.8; chuẩn hóa quy ước ngôn ngữ, bộ kiểm chứng tự động cho $3$ nhiệm vụ; biên tập báo cáo IEEE và video demo.
+    \item \textbf{Lê Văn Quý -- 52400153 (Hoàn thành 100\%)}: Phụ trách Nhiệm vụ~1 (\texttt{base\_solver.py}, \texttt{board.py}, \texttt{cnf\_encoder.py}, \texttt{sat\_solver.py}, \texttt{min\_conflicts.py} với heuristic Tabu thích nghi, giao diện PyGame tối giản \texttt{ui\_nqueen.py} và sổ tay \texttt{experiments\_task1.ipynb}).
+    \item \textbf{Huỳnh Thiên Đức -- 5240110 (Hoàn thành 100\%)}: Phụ trách Nhiệm vụ~2 (engine bất biến Zero-Sum, vật lý đạn $3$~ô, $4$ cấu hình tìm kiếm đối kháng, hàm lượng giá BFS né tường thép, đấu trường vector \texttt{pygame\_arena.py}, nạp bot nhóm ngoài và sổ tay \texttt{benchmark\_task2.ipynb}).
+    \item \textbf{Lê Tiến Đạt -- 52400105 (Hoàn thành 100\%)}: Phụ trách Nhiệm vụ~3 (mô hình hóa Kakuro CSP, \texttt{SumPartitionCatalog}, Forward Checking \& AC-3 mở rộng, MRV/Bậc/LCV, giao diện đa luồng \texttt{visualizer\_ui.py}, \texttt{board\_editor.py} và sổ tay \texttt{experiments\_task3.ipynb}).
+\end{itemize}
+
+\subsection{Tự Đánh Giá Mức Độ Hoàn Thành Và Điểm Số}
+Toàn bộ yêu cầu mô hình hóa, mã nguồn OOP tách rời Model--View, bộ kiểm chứng tự động ($5/5$ ở Task~1, $6/6$ ở Task~2, $22/22$ ở Task~3), ba giao diện PyGame tối giản đồng bộ và ba sổ tay Jupyter còn nguyên $100\%$ kết quả đầu ra đã hoàn thiện đầy đủ: Nhiệm vụ~1 ($3,0/3,0$), Nhiệm vụ~2 ($3,0/3,0$), Nhiệm vụ~3 ($3,0/3,0$) và Nhiệm vụ~4 ($1,0/1,0$). Tổng điểm tự đánh giá dự kiến: $\mathbf{10,0 / 10,0}$.
+
+\section{Kết Luận}
+Nhóm đã hoàn thiện toàn diện bốn nhiệm vụ học phần 503043 theo nguyên lý OOP và tương thích đa nền tảng macOS 13.7.8. Các thực nghiệm định lượng khẳng định rõ vai trò của heuristic và lan truyền ràng buộc: Tabu thích nghi đạt $100\%$ thành công và giảm tới $74,6\%$ bước sửa ở $N$-Queen; Alpha-Beta kết hợp lượng giá BFS né tường thép và bảng băm TT giảm tới $890$ lần trạng thái ở Đấu Tăng; AC-3 mở rộng cùng MRV/Bậc/LCV đưa số lần quay lui về $0$ trên mọi bảng Kakuro. Hệ thống ba giao diện PyGame tối giản đi kèm trực quan hóa đầy đủ thuật toán, sẵn sàng phục vụ trình diễn và phỏng vấn vấn đáp.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
+```
+
+---
+
+## Phần 4. Mã Nguồn BibTeX Hoàn Chỉnh `references.bib` (Import Trực Tiếp Vào Overleaf)
+
+```bibtex
+@book{russell2020aima,
+  author    = {Stuart J. Russell and Peter Norvig},
+  title     = {Artificial Intelligence: A Modern Approach},
+  edition   = {4th},
+  publisher = {Pearson},
+  year      = {2020}
+}
+
+@inproceedings{audemard2009glucose,
+  author    = {Gilles Audemard and Laurent Simon},
+  title     = {Predicting Learnt Clauses Quality in Modern {SAT} Solvers},
+  booktitle = {Proc. 21st Int. Joint Conf. Artif. Intell. (IJCAI)},
+  pages     = {399--404},
+  year      = {2009}
+}
+
+@inproceedings{ignatiev2018pysat,
+  author    = {Alexey Ignatiev and Antonio Morgado and Joao Marques-Silva},
+  title     = {{PySAT}: A {Python} Toolkit for Prototyping with {SAT} Oracles},
+  booktitle = {Proc. Int. Conf. Theory Appl. Satisfiability Testing (SAT)},
+  pages     = {428--437},
+  year      = {2018}
+}
+
+@article{minton1992minconflicts,
+  author    = {Steven Minton and Mark D. Johnston and Andrew B. Philips and Philip Laird},
+  title     = {Minimizing Conflicts: A Heuristic Repair Method for Constraint Satisfaction and Scheduling Problems},
+  journal   = {Artificial Intelligence},
+  volume    = {58},
+  number    = {1--3},
+  pages     = {161--205},
+  year      = {1992}
+}
+
+@article{glover1989tabu,
+  author    = {Fred Glover},
+  title     = {Tabu Search---Part {I}},
+  journal   = {ORSA Journal on Computing},
+  volume    = {1},
+  number    = {3},
+  pages     = {190--206},
+  year      = {1989}
+}
+
+@article{knuth1975alphabeta,
+  author    = {Donald E. Knuth and Ronald W. Moore},
+  title     = {An Analysis of Alpha-Beta Pruning},
+  journal   = {Artificial Intelligence},
+  volume    = {6},
+  number    = {4},
+  pages     = {293--326},
+  year      = {1975}
+}
+
+@article{mackworth1977consistency,
+  author    = {Alan K. Mackworth},
+  title     = {Consistency in Networks of Relations},
+  journal   = {Artificial Intelligence},
+  volume    = {8},
+  number    = {1},
+  pages     = {99--118},
+  year      = {1977}
+}
+
+@inproceedings{simonis2008kakuro,
+  author    = {Helmut Simonis},
+  title     = {Kakuro as a Constraint Problem},
+  booktitle = {Proc. 7th Int. Workshop Constraint Modelling and Reformulation (ModRef)},
+  year      = {2008}
+}
+```
+
+---
+
+## Phần 5. Checklist Nghiệm Thu Task 4 Khi Bạn Biên Dịch Trên Overleaf
+
+- [x] Mẫu hội nghị **IEEE 2 cột** (`\documentclass[conference]{IEEEtran}`), đầy đủ **Title**, **Authors** (**TS. Trịnh Hùng Cường ở vị trí tác giả cuối cùng**), **Abstract**, **Task 1 / Task 2 / Task 3** (mỗi Task đều có mô hình hóa, lớp OOP thực tế, bảng số liệu, biểu đồ thực nghiệm và ảnh chụp giao diện PyGame tối giản), **Contributions (`100%`)**, **Self-evaluation**, **Conclusion** và **8 tài liệu tham khảo chuẩn IEEE**.
+- [x] Kiểm toán tự động: `0` lỗi cú pháp/ngoặc, `0` ký tự ngoài bảng mã `T5`, `8/8` hình PNG trong `report/figures/` được nhúng đầy đủ, `13/13` nhãn tham chiếu khớp, `8/8` trích dẫn BibTeX khớp.
+- [ ] **Thao tác thủ công trên Overleaf:** Upload thư mục `report/` (hoặc copy–paste Phần 3 & Phần 4 + upload 8 ảnh vào `figures/`), chọn Compiler **pdfLaTeX**, nhấn **Recompile**, xác nhận tổng số trang **$\le 5$ trang** và lưu đè tệp tải về thành `report.pdf`.
+- [ ] **Đóng gói nộp bài cá nhân:** Cập nhật URL video demo vào [demo.txt](file:///d:/3.1.%20AI/Final/demo.txt) rồi nén thư mục `AI_final_<Project Group ID>_<Student ID>` gồm `source/`, `report.pdf`, `demo.txt`, `README.md`, `requirement.txt`.

@@ -1,9 +1,9 @@
-"""Pure state transitions and deterministic cell-by-cell projectile collisions."""
+"""Ham chuyen trang thai thuan tuy RESULT(s, a) va vat ly dan bay tung o mot."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 from ..config import (
     ALL_ACTIONS,
@@ -20,35 +20,76 @@ from .entities import Base, BrickWall, Bullet, Tank
 from .game_state import GameState
 
 BulletFrame = Tuple[int, int, int, str]
+BulletTrail = Tuple[int, List[Tuple[int, int]]]
 Impact = Tuple[int, int, str]
 
 
 @dataclass
 class StepEvent:
-    """Animation data for a completed action and its projectile substeps."""
+    """Du lieu mo ta hoat anh va vet va cham sau mot luot hanh dong."""
 
     player_id: int
     action: str
     bullet_frames: List[List[BulletFrame]] = field(default_factory=list)
+    bullet_trails: List[BulletTrail] = field(default_factory=list)
     impacts: List[Impact] = field(default_factory=list)
 
 
+@dataclass(frozen=True)
+class MatchStepSnapshot:
+    """Anh chup moi luot dau phuc vu mo phong va giao dien tach biet Model-View."""
+
+    ply: int
+    player_id: int
+    action: str
+    state: GameState
+    event: StepEvent
+    metrics: Any
+
+
 class TankBattleEngine:
-    """Stateless transition engine implementing RESULT(state, action)."""
+    """Bo xu ly chuyen trang thai khong luu bien noi bo, cai dat RESULT(s, a)."""
 
     @classmethod
     def apply_action(cls, state: GameState, action: str) -> GameState:
-        """Return the next immutable state without changing ``state``."""
+        """Tra ve trang thai bat bien ke tiep ma khong thay doi state goc."""
         next_state, _ = cls._transition(state, action, record_events=False)
         return next_state
 
     @classmethod
     def step_with_events(cls, state: GameState, action: str) -> tuple[GameState, StepEvent]:
-        """Return the next state and per-cell projectile animation events."""
+        """Tra ve trang thai ke tiep cung du lieu di chuyen dan va va cham tung o."""
         next_state, event = cls._transition(state, action, record_events=True)
         if event is None:
-            raise RuntimeError("Event recording did not produce a StepEvent.")
+            raise RuntimeError("Khong tao duoc du lieu su kien StepEvent")
         return next_state, event
+
+    @classmethod
+    def iter_match(
+        cls,
+        initial_state: GameState,
+        agent_max: Any,
+        agent_min: Any,
+        max_plies: Optional[int] = None,
+    ) -> Iterator[MatchStepSnapshot]:
+        """Generator mo phong tron tran dau giua 2 tac tu khong phu thuoc PyGame."""
+        state = initial_state.clone()
+        limit = state.max_plies if max_plies is None else min(state.max_plies, max_plies)
+
+        while not state.is_terminal() and state.ply < limit:
+            player_id = state.current_player
+            agent = agent_max if player_id == PLAYER_MAX else agent_min
+            action = agent.safe_choose_action(state)
+            next_state, event = cls.step_with_events(state, action)
+            yield MatchStepSnapshot(
+                ply=next_state.ply,
+                player_id=player_id,
+                action=action,
+                state=next_state,
+                event=event,
+                metrics=getattr(agent, "last_metrics", None),
+            )
+            state = next_state
 
     @classmethod
     def _transition(
@@ -58,7 +99,7 @@ class TankBattleEngine:
         record_events: bool,
     ) -> tuple[GameState, Optional[StepEvent]]:
         if action not in ALL_ACTIONS:
-            raise ValueError(f"Unknown action: {action!r}")
+            raise ValueError(f"Hanh dong khong hop le: {action!r}")
 
         player_id = state.current_player
         event = StepEvent(player_id=player_id, action=action) if record_events else None
@@ -72,6 +113,7 @@ class TankBattleEngine:
         steel_walls = state.steel_walls
         tank = tanks[player_id]
 
+        # Pha 1: Thuc thi hanh dong cua xe tang dang toi luot
         if action in MOVE_ACTION_TO_DIR:
             direction = MOVE_ACTION_TO_DIR[action]
             dr, dc = DIRECTION_DELTAS[direction]
@@ -95,8 +137,7 @@ class TankBattleEngine:
                     ):
                         tank, _ = tank.damaged(DAMAGE_PER_HIT)
                         bullets[index] = replace(bullet, active=False)
-                        if event is not None:
-                            event.impacts.append((destination[0], destination[1], "TANK"))
+                        cls._record_impact(event, destination[0], destination[1], "TANK")
                         break
             tanks[player_id] = tank
         elif action == FIRE and not any(b.owner_id == player_id for b in bullets):
@@ -111,6 +152,14 @@ class TankBattleEngine:
         elif action == STAY:
             pass
 
+        # Khoi tao vet bay cua dan phe hien tai de phuc vu ve duong net dut tren UI
+        trails_by_idx: Dict[int, List[Tuple[int, int]]] = {}
+        if record_events:
+            for idx, b in enumerate(bullets):
+                if b.active and b.owner_id == player_id:
+                    trails_by_idx[idx] = [(b.row, b.col)]
+
+        # Pha 2: Dan bay toi da 3 o moi chu ky, kiem tra va cham ngay sau tung o mot
         if not cls._is_combat_terminal(tanks, bases):
             for _ in range(BULLET_SPEED_PER_CYCLE):
                 moved_any = False
@@ -118,7 +167,7 @@ class TankBattleEngine:
                     if not bullet.active or bullet.owner_id != player_id:
                         continue
                     moved_any = True
-                    cls._advance_bullet_one_cell(
+                    hit_pos = cls._advance_bullet_one_cell(
                         index,
                         bullets,
                         tanks,
@@ -129,19 +178,26 @@ class TankBattleEngine:
                         state.cols,
                         event,
                     )
+                    if record_events and index in trails_by_idx and hit_pos is not None:
+                        trails_by_idx[index].append(hit_pos)
                     if cls._is_combat_terminal(tanks, bases):
                         break
 
                 if event is not None and moved_any:
                     event.bullet_frames.append(
                         [
-                            (bullet.owner_id, bullet.row, bullet.col, bullet.direction)
-                            for bullet in bullets
-                            if bullet.active
+                            (b.owner_id, b.row, b.col, b.direction)
+                            for b in bullets
+                            if b.active
                         ]
                     )
                 if not moved_any or cls._is_combat_terminal(tanks, bases):
                     break
+
+        if event is not None:
+            for idx, pts in trails_by_idx.items():
+                if len(pts) >= 2:
+                    event.bullet_trails.append((bullets[idx].owner_id, pts))
 
         next_state = GameState(
             rows=state.rows,
@@ -200,15 +256,18 @@ class TankBattleEngine:
         rows: int,
         cols: int,
         event: Optional[StepEvent],
-    ) -> None:
+    ) -> Optional[Tuple[int, int]]:
+        """Di chuyen 1 vien dan dung 1 o va kiem tra va cham ngay lap tuc."""
         bullet = bullets[bullet_index]
         dr, dc = DIRECTION_DELTAS[bullet.direction]
         next_row, next_col = bullet.row + dr, bullet.col + dc
         if not (0 <= next_row < rows and 0 <= next_col < cols):
             bullets[bullet_index] = replace(bullet, active=False)
-            return
+            return None
 
         bullets[bullet_index] = replace(bullet, row=next_row, col=next_col)
+
+        # 1. Kiem tra triet tieu giua 2 vien dan doi phuong
         for other_index, other in enumerate(bullets):
             if (
                 other_index != bullet_index
@@ -219,35 +278,41 @@ class TankBattleEngine:
                 bullets[bullet_index] = replace(bullets[bullet_index], active=False)
                 bullets[other_index] = replace(other, active=False)
                 cls._record_impact(event, next_row, next_col, "BULLET")
-                return
+                return (next_row, next_col)
 
+        # 2. Kiem tra tuong thep bat tu
         if (next_row, next_col) in steel_walls:
             bullets[bullet_index] = replace(bullets[bullet_index], active=False)
             cls._record_impact(event, next_row, next_col, "STEEL")
-            return
+            return (next_row, next_col)
 
+        # 3. Kiem tra tuong gach (-1 HP)
         wall = brick_walls.get((next_row, next_col))
         if wall is not None and wall.hp > 0:
             brick_walls[(next_row, next_col)], _ = wall.damaged(DAMAGE_PER_HIT)
             bullets[bullet_index] = replace(bullets[bullet_index], active=False)
             cls._record_impact(event, next_row, next_col, "WALL")
-            return
+            return (next_row, next_col)
 
+        # 4. Kiem tra can cu (-1 HP)
         for player_id in (PLAYER_MAX, PLAYER_MIN):
             base = bases[player_id]
             if base.hp > 0 and (base.row, base.col) == (next_row, next_col):
                 bases[player_id], _ = base.damaged(DAMAGE_PER_HIT)
                 bullets[bullet_index] = replace(bullets[bullet_index], active=False)
                 cls._record_impact(event, next_row, next_col, "BASE")
-                return
+                return (next_row, next_col)
 
+        # 5. Kiem tra xe tang (-1 HP)
         for player_id in (PLAYER_MAX, PLAYER_MIN):
             tank = tanks[player_id]
             if tank.hp > 0 and (tank.row, tank.col) == (next_row, next_col):
                 tanks[player_id], _ = tank.damaged(DAMAGE_PER_HIT)
                 bullets[bullet_index] = replace(bullets[bullet_index], active=False)
                 cls._record_impact(event, next_row, next_col, "TANK")
-                return
+                return (next_row, next_col)
+
+        return (next_row, next_col)
 
     @staticmethod
     def _record_impact(

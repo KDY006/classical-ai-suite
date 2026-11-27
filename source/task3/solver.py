@@ -1,11 +1,12 @@
-"""Backtracking Search solver combining Constraint Propagation with MRV, Degree, and LCV heuristics."""
+"""Bo giai Kakuro CSP ket hop Quay lui, Lan truyen rang buoc va MRV/Bac/LCV."""
 
 from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Dict, List, Optional, Tuple
+from threading import Event
+from typing import Dict, Iterator, List, Optional, Tuple
 
 from .csp_model import KakuroCSP
 from .propagation import (
@@ -18,16 +19,27 @@ from .propagation import (
 
 
 class SolverMode(str, Enum):
+    """Ba cau hinh giai CSP phuc vu doi sanh hieu qua lan truyen va heuristic."""
+
     PLAIN_BT = "Quay lui cơ bản"
     BT_FC = "Quay lui + Kiểm tra tiến + MRV"
     BT_MAC_HEURISTICS = "Quay lui + AC-3 mở rộng + MRV/Bậc/LCV"
 
+    @property
+    def cli_label(self) -> str:
+        """Nhan che do khong dau ASCII phuc vu in bang tren terminal."""
+        if self is SolverMode.PLAIN_BT:
+            return "Quay lui co ban"
+        if self is SolverMode.BT_FC:
+            return "Quay lui + Kiem tra tien + MRV"
+        return "Quay lui + AC-3 mo rong + MRV/Bac/LCV"
+
 
 @dataclass
 class SolverStep:
-    """Independent snapshot of a single search/propagation event for the Kakuro UI."""
+    """Ban chup doc lap cua mot su kien tim kiem/lan truyen phuc vu giao dien UI."""
 
-    step_type: str  # PREPROCESS | SELECT_VAR | ASSIGN | PRUNE | BACKTRACK | SOLVED
+    step_type: str
     focus_pos: Optional[Tuple[int, int]]
     value: Optional[int]
     assignment: Dict[Tuple[int, int], int]
@@ -40,7 +52,7 @@ class SolverStep:
 
 @dataclass
 class KakuroSolveResult:
-    """Aggregate outcome and performance statistics of a Kakuro solver run."""
+    """Ket qua tong hop va thong ke hieu nang sau mot lan giai Kakuro."""
 
     puzzle_name: str
     mode: SolverMode
@@ -57,11 +69,11 @@ class KakuroSolveResult:
 
 
 class SearchCancelled(Exception):
-    """Cooperative cancellation, distinct from UNSAT."""
+    """Ngoai le huy phien tim kiem hop tac, tach biet voi trang thai vo nghiem UNSAT."""
 
 
 class KakuroSolver:
-    """Object-oriented Kakuro CSP solver supporting 3 configurable propagation/heuristic modes."""
+    """Bo giai Kakuro huong doi tuong ho tro 3 che do lan truyen va heuristic."""
 
     def __init__(
         self,
@@ -69,45 +81,75 @@ class KakuroSolver:
         record_steps: bool = False,
         max_recorded_steps: int = 2500,
         node_limit: int = 300_000,
-        cancel_event=None,
+        cancel_event: Optional[Event] = None,
     ) -> None:
         if node_limit < 1 or max_recorded_steps < 1:
-            raise ValueError("Limits must be positive.")
+            raise ValueError("Gioi han nut duyet va so buoc luu vet phai la so nguyen duong")
         self.mode: SolverMode = mode
         self.record_steps: bool = record_steps
         self.max_recorded_steps: int = max_recorded_steps
         self.node_limit: int = node_limit
-        self.cancel_event = cancel_event
+        self.cancel_event: Optional[Event] = cancel_event
 
         self._nodes: int = 0
         self._backtracks: int = 0
         self._pruned_count: int = 0
         self._steps: List[SolverStep] = []
+        self._limit_hit: bool = False
+        self._trace_truncated: bool = False
 
-    def _check_cancel(self):
+    def _check_cancel(self) -> None:
         if self.cancel_event is not None and self.cancel_event.is_set():
             raise SearchCancelled()
 
+    def iter_steps(self, csp: KakuroCSP) -> Iterator[SolverStep]:
+        """Generator tra ve lan luot tung buoc giai phuc vu tach biet Model-View."""
+        prev_record = self.record_steps
+        self.record_steps = True
+        try:
+            result = self.solve(csp)
+        finally:
+            self.record_steps = prev_record
+        yield from result.steps_trace
+
     def solve(self, csp: KakuroCSP) -> KakuroSolveResult:
+        """Giai bai toan KakuroCSP va tra ve ket qua kem thong so do luong."""
         t0 = time.perf_counter()
         try:
             return self._solve(csp)
         except SearchCancelled:
-            return KakuroSolveResult(csp.name, self.mode, False, dict(csp.givens),
-                (time.perf_counter()-t0)*1000, self._nodes, self._backtracks,
-                self._pruned_count, False, status='CANCELLED')
+            return KakuroSolveResult(
+                puzzle_name=csp.name,
+                mode=self.mode,
+                solved=False,
+                assignment=dict(csp.givens),
+                elapsed_ms=(time.perf_counter() - t0) * 1000.0,
+                nodes_explored=self._nodes,
+                backtracks=self._backtracks,
+                pruned_values=self._pruned_count,
+                valid_verified=False,
+                status="CANCELLED",
+            )
 
     def _solve(self, csp: KakuroCSP) -> KakuroSolveResult:
         self._nodes = 0
         self._backtracks = 0
         self._pruned_count = 0
         self._steps = []
-
         self._limit_hit = False
         self._trace_truncated = False
+
         t0 = time.perf_counter()
         assignment: Dict[Tuple[int, int], int] = dict(csp.givens)
-        self._emit("INITIAL", None, None, assignment, csp.initial_domains(), {}, "Khởi tạo miền giá trị ban đầu trước khi tiền xử lý.")
+        self._emit(
+            "INITIAL",
+            None,
+            None,
+            assignment,
+            csp.initial_domains(),
+            {},
+            "Khởi tạo miền giá trị ban đầu trước khi tiền xử lý.",
+        )
 
         givens_ok = all(run.is_consistent_partial(assignment) for run in csp.runs)
         ok = givens_ok
@@ -136,7 +178,17 @@ class KakuroSolver:
             )
         else:
             domains, pre_pruned = SumPartitionCatalog.preprocess_node_domains(csp)
-            ok, ac_pruned = ExtendedAC3Propagator.propagate(csp, assignment, domains, seed_pos=None, check_cancel=self._check_cancel) if givens_ok else (False, {})
+            ok, ac_pruned = (
+                ExtendedAC3Propagator.propagate(
+                    csp,
+                    assignment,
+                    domains,
+                    seed_pos=None,
+                    check_cancel=self._check_cancel,
+                )
+                if givens_ok
+                else (False, {})
+            )
             merged_pruned = self._merge_pruned(pre_pruned, ac_pruned)
             self._count_pruned(merged_pruned)
             self._emit(
@@ -148,16 +200,25 @@ class KakuroSolver:
                 merged_pruned,
                 "Đã áp dụng tiền xử lý tổ hợp tổng + lan truyền cung AC-3 mở rộng.",
             )
+
         initial_ok = givens_ok and all(domains.values()) and ok
         if initial_ok and self.mode == SolverMode.BT_FC:
             for pos, value in assignment.items():
                 initial_ok, pruned = ForwardChecker.propagate(csp, pos, value, assignment, domains)
                 self._count_pruned(pruned)
                 if pruned:
-                    self._emit("PRUNE", pos, value, assignment, domains, pruned,
-                               "Lan truyền ràng buộc từ các chữ số cho trước.")
+                    self._emit(
+                        "PRUNE",
+                        pos,
+                        value,
+                        assignment,
+                        domains,
+                        pruned,
+                        "Lan truyền ràng buộc từ các chữ số cho trước.",
+                    )
                 if not initial_ok:
                     break
+
         solved = initial_ok and self._backtrack(csp, assignment, domains)
         elapsed_ms = (time.perf_counter() - t0) * 1000.0
         verified = csp.verify_solution(assignment) if solved else False
@@ -174,10 +235,18 @@ class KakuroSolver:
                 {},
                 f"Đã giải xong toàn bộ {len(csp.variables)} biến sau {self._nodes} nút ({self._backtracks} lần quay lui).",
             )
-
         else:
-            self._emit(status, None, None, assignment, domains, {},
-                       "Chạm giới hạn nút duyệt; chưa kết luận được tính khả thỏa." if self._limit_hit else "Bảng không có nghiệm hợp lệ.")
+            self._emit(
+                status,
+                None,
+                None,
+                assignment,
+                domains,
+                {},
+                "Chạm giới hạn nút duyệt; chưa kết luận được tính khả thỏa."
+                if self._limit_hit
+                else "Bảng không có nghiệm hợp lệ.",
+            )
 
         return KakuroSolveResult(
             puzzle_name=csp.name,
@@ -211,9 +280,9 @@ class KakuroSolver:
         cand_values = self._order_domain_values(csp, pos, assignment, domains)
 
         if self.mode == SolverMode.BT_MAC_HEURISTICS:
-            msg = f"MRV + Bậc chọn ô {pos} với miền ứng viên {sorted(domains[pos])}."
+            msg = f"MRV + Bậc chọn ô ({pos[0] + 1}, {pos[1] + 1}) với miền {sorted(domains[pos])}."
         else:
-            msg = f"Chọn ô chưa gán {pos} với {len(domains[pos])} ứng viên."
+            msg = f"Chọn ô chưa gán ({pos[0] + 1}, {pos[1] + 1}) với {len(domains[pos])} ứng viên."
         self._emit("SELECT_VAR", pos, None, assignment, domains, {}, msg)
 
         for val in cand_values:
@@ -223,8 +292,15 @@ class KakuroSolver:
                 return False
             self._nodes += 1
             if not csp.is_consistent(pos, val, assignment):
-                self._emit("REJECT", pos, val, assignment, domains, {},
-                           f"Từ chối X{pos} = {val}: vi phạm tổng gợi ý hoặc trùng chữ số.")
+                self._emit(
+                    "REJECT",
+                    pos,
+                    val,
+                    assignment,
+                    domains,
+                    {},
+                    f"Từ chối ({pos[0] + 1}, {pos[1] + 1}) = {val}: vi phạm tổng hoặc trùng chữ số.",
+                )
                 continue
 
             saved_domains: DomainMap = {p: set(d) for p, d in domains.items()}
@@ -238,7 +314,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 {},
-                f"Thử gán X{pos} = {val}.",
+                f"Thử gán ô ({pos[0] + 1}, {pos[1] + 1}) = {val}.",
             )
 
             if self.mode == SolverMode.PLAIN_BT:
@@ -248,11 +324,19 @@ class KakuroSolver:
             else:
                 prop_ok, pruned_rec = ForwardChecker.propagate(csp, pos, val, assignment, domains)
                 if prop_ok:
-                    prop_ok, ac_pruned = ExtendedAC3Propagator.propagate(csp, assignment, domains, seed_pos=pos, changed_positions=pruned_rec, check_cancel=self._check_cancel)
+                    prop_ok, ac_pruned = ExtendedAC3Propagator.propagate(
+                        csp,
+                        assignment,
+                        domains,
+                        seed_pos=pos,
+                        changed_positions=pruned_rec,
+                        check_cancel=self._check_cancel,
+                    )
                     pruned_rec = self._merge_pruned(pruned_rec, ac_pruned)
 
             if pruned_rec:
                 self._count_pruned(pruned_rec)
+                count_rm = sum(len(v) for v in pruned_rec.values())
                 self._emit(
                     "PRUNE",
                     pos,
@@ -260,16 +344,24 @@ class KakuroSolver:
                     assignment,
                     domains,
                     pruned_rec,
-                    f"Lan truyền ràng buộc từ X{pos}={val} đã loại {sum(len(v) for v in pruned_rec.values())} ứng viên."
-                    + ("" if prop_ok else " -> Phát hiện mâu thuẫn miền!"),
+                    f"Lan truyền từ ({pos[0] + 1}, {pos[1] + 1}) = {val} loại {count_rm} ứng viên."
+                    + ("" if prop_ok else " Phát hiện mâu thuẫn miền!"),
                 )
 
             if not prop_ok:
-                self._emit("FAILURE", pos, val, assignment, domains, {}, "Ngõ cụt: một miền giá trị bị rỗng hoặc không còn tổ hợp hỗ trợ.")
+                self._emit(
+                    "FAILURE",
+                    pos,
+                    val,
+                    assignment,
+                    domains,
+                    {},
+                    "Ngõ cụt: xuất hiện miền rỗng hoặc không còn tổ hợp hỗ trợ.",
+                )
             if prop_ok and self._backtrack(csp, assignment, domains):
                 return True
 
-            # Undo assignment and restore domains (Backtrack)
+            # Hoan tac phep gan va khoi phuc mien gia tri (Backtrack)
             del assignment[pos]
             domains.clear()
             domains.update(saved_domains)
@@ -281,7 +373,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 {},
-                f"Quay lui tại X{pos} = {val}; khôi phục các miền giá trị.",
+                f"Quay lui tại ({pos[0] + 1}, {pos[1] + 1}) = {val}; khôi phục miền giá trị.",
             )
 
             if self._limit_hit:
@@ -296,13 +388,12 @@ class KakuroSolver:
         domains: DomainMap,
     ) -> Tuple[int, int]:
         unassigned = [p for p in csp.ordered_positions if p not in assignment]
-        if self.mode != SolverMode.BT_MAC_HEURISTICS:
-            # For BT_FC use simple MRV without Degree, for PLAIN_BT static row-major order
-            if self.mode == SolverMode.PLAIN_BT:
-                return unassigned[0]
+        if self.mode == SolverMode.PLAIN_BT:
+            return unassigned[0]
+        if self.mode == SolverMode.BT_FC:
             return min(unassigned, key=lambda p: len(domains[p]))
 
-        # Lecture 08 MRV (Minimum Remaining Values) + Degree Heuristic tie-breaker
+        # Ket hop MRV (mien nho nhat) va pha hoa bang Bac (Degree Heuristic)
         def mrv_degree_key(pos: Tuple[int, int]) -> Tuple[int, int, Tuple[int, int]]:
             mrv = len(domains[pos])
             unassigned_degree = sum(1 for peer in csp.peers[pos] if peer not in assignment)
@@ -321,8 +412,7 @@ class KakuroSolver:
         if self.mode != SolverMode.BT_MAC_HEURISTICS or len(values) <= 1:
             return values
 
-        # Estimate LCV via 1-hop Forward Checking on neighboring unassigned cells
-        # in the two intersecting runs (avoids duplicating full multi-hop AC-3 per candidate).
+        # Uoc luong LCV 1 buoc bang Forward Checking tren cac o hang xom chua gan
         relevant_positions = [p for p in csp.peers[pos] if p not in assignment]
 
         def constraining_impact(val: int) -> Tuple[int, int, int]:
@@ -334,9 +424,7 @@ class KakuroSolver:
             trial_domains = {p: set(domains[p]) for p in relevant_positions}
             trial_domains[pos] = {val}
             ok, _ = ForwardChecker.propagate(csp, pos, val, trial_assignment, trial_domains)
-            eliminated = sum(
-                len(domains[p]) - len(trial_domains[p]) for p in relevant_positions
-            )
+            eliminated = sum(len(domains[p]) - len(trial_domains[p]) for p in relevant_positions)
             return (0 if ok else 1, eliminated, val)
 
         return sorted(values, key=constraining_impact)
@@ -372,7 +460,7 @@ class KakuroSolver:
             self._trace_truncated = True
             return
         if terminal and self._trace_truncated:
-            message = "Đã chạm giới hạn lưu vết trung gian. " + message
+            message = "Đã lược bớt một phần lịch sử trung gian. " + message
         self._steps.append(
             SolverStep(
                 step_type=step_type,

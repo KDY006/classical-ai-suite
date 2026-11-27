@@ -1,5 +1,5 @@
-"""PyGame graphical user interface package for Tank Battle."""
+"""Giao dien PyGame phong cach Toi gian (Minimalism) cho Nhiem vu 2."""
 
-from .pygame_arena import TankBattleArenaUI
+from .pygame_arena import HumanController, TankBattleArenaUI
 
-__all__ = ["TankBattleArenaUI"]
+__all__ = ["HumanController", "TankBattleArenaUI"]

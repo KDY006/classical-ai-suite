@@ -1,4 +1,4 @@
-"""Rules shared by the Tank Battle engine, agents, and user interface."""
+"""Cac hang so luat choi dung chung cho Engine, tac tu va giao dien Task 2."""
 
 from __future__ import annotations
 
@@ -24,6 +24,24 @@ ALL_ACTIONS: Final[Tuple[str, ...]] = (
     STAY,
 )
 
+ACTION_LABELS_VI: Final[Dict[str, str]] = {
+    MOVE_UP: "LÊN",
+    MOVE_DOWN: "XUỐNG",
+    MOVE_LEFT: "TRÁI",
+    MOVE_RIGHT: "PHẢI",
+    FIRE: "BẮN",
+    STAY: "CHỜ",
+}
+
+ACTION_LABELS_CLI: Final[Dict[str, str]] = {
+    MOVE_UP: "LEN",
+    MOVE_DOWN: "XUONG",
+    MOVE_LEFT: "TRAI",
+    MOVE_RIGHT: "PHAI",
+    FIRE: "BAN",
+    STAY: "CHO",
+}
+
 DIR_UP: Final[str] = "UP"
 DIR_DOWN: Final[str] = "DOWN"
 DIR_LEFT: Final[str] = "LEFT"
@@ -44,6 +62,7 @@ MOVE_ACTION_TO_DIR: Final[Dict[str, str]] = {
     MOVE_RIGHT: DIR_RIGHT,
 }
 
+# Thong so sinh luc va toc do dan theo dung de bai Task 2
 TANK_INITIAL_HP: Final[int] = 6
 BASE_INITIAL_HP: Final[int] = 9
 WALL_INITIAL_HP: Final[int] = 3

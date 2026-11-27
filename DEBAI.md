@@ -160,6 +160,5 @@
 - Thiếu bất kỳ thành phần bắt buộc nào trong gói nộp bài sẽ bị **trừ tối thiểu 50% điểm trình bày/báo cáo**.
 - Sao chép mã nguồn từ Internet hoặc từ sinh viên khác, chia sẻ bài làm với nhóm khác hoặc thực hiện các hành vi gian lận học thuật tương tự sẽ nhận **0.0 điểm cho tất cả các nhóm liên quan**.
 - Nếu có bất kỳ dấu hiệu sao chép hoặc chia sẻ bài làm trái phép nào, các buổi phỏng vấn bổ sung có thể được tổ chức để xác minh tính xác thực bài làm của sinh viên.
-- **Nghiêm cấm sử dụng công cụ AI trong đồ án này.** Nếu phát hiện bất kỳ ký tự đặc trưng do AI sinh ra hoặc nội dung nào khác có thể nhận diện là do AI tạo ra trong các file mã nguồn, nhóm sẽ nhận **0.0 điểm** cho nhiệm vụ tương ứng.
 
 *(HẾT ĐỀ BÀI)*

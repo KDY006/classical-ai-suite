@@ -1,10 +1,10 @@
-"""Constraint propagation techniques for Kakuro: Sum Partitions, Forward Checking, and Extended AC-3."""
+"""Cac ky thuat lan truyen rang buoc: Sum Partitions, Forward Checking va Extended AC-3."""
 
 from __future__ import annotations
 
 from collections import deque
 from itertools import combinations
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Callable, Dict, FrozenSet, Iterable, List, Optional, Set, Tuple
 
 from .csp_model import KakuroCSP, RunConstraint
 
@@ -13,7 +13,7 @@ PrunedRecord = Dict[Tuple[int, int], List[int]]
 
 
 class SumPartitionCatalog:
-    """Precomputes all valid duplicate-free digit combinations (1..9) for every (length, sum)."""
+    """Tien tinh toan bo to hop chu so 1..9 doi mot khac nhau cho moi cap (do dai, tong)."""
 
     _CACHE: Dict[Tuple[int, int], List[FrozenSet[int]]] = {}
     _INITIALIZED: bool = False
@@ -36,9 +36,7 @@ class SumPartitionCatalog:
         target_sum: int,
         forbidden: Set[int],
     ) -> Set[int]:
-        """Return union of digits participating in at least one valid partition of (length, target_sum)
-        that avoids all ``forbidden`` digits.
-        """
+        """Tra ve hop cac chu so thuoc it nhat mot phan hoach hop le tranh tap forbidden."""
         cls.initialize()
         if length <= 0 or target_sum <= 0:
             return set()
@@ -51,7 +49,7 @@ class SumPartitionCatalog:
 
     @classmethod
     def preprocess_node_domains(cls, csp: KakuroCSP) -> Tuple[DomainMap, PrunedRecord]:
-        """Apply initial sum-partition node consistency across every horizontal and vertical run."""
+        """Thu hep mien ban dau cua tung o bang phep giao to hop tong ngang va doc."""
         cls.initialize()
         domains = csp.initial_domains()
         pruned: PrunedRecord = {}
@@ -71,7 +69,7 @@ class SumPartitionCatalog:
 
 
 class ForwardChecker:
-    """Implements Forward Checking on unassigned neighbors after assigning X_pos = value."""
+    """Kiem tra tien (Forward Checking) tren cac o chua gan cung day sau khi gan X_pos."""
 
     @staticmethod
     def propagate(
@@ -118,15 +116,7 @@ class ForwardChecker:
 
 
 class ExtendedAC3Propagator:
-    """Generalized Arc Consistency (MAC) over Kakuro AllDiff + Exact-Sum run constraints.
-
-    Maintains a worklist of RunConstraints. For each run:
-      1. Eliminates digits already fixed in assigned or singleton cells of the same run.
-      2. Prunes candidate value ``v`` for unassigned cell ``X_i`` if no valid tuple of
-         distinct remaining values from the other unassigned cells' current domains can
-         sum to ``target_sum - sum(assigned) - v`` (verified via fast domain-aware DP/DFS
-         since run length <= 9).
-    """
+    """Lan truyen cung mo rong (MAC / GAC) cho rang buoc bac cao AllDiff + Exact-Sum."""
 
     @classmethod
     def propagate(
@@ -135,8 +125,8 @@ class ExtendedAC3Propagator:
         assignment: Dict[Tuple[int, int], int],
         domains: DomainMap,
         seed_pos: Optional[Tuple[int, int]] = None,
-        changed_positions=None,
-        check_cancel=None,
+        changed_positions: Optional[Iterable[Tuple[int, int]]] = None,
+        check_cancel: Optional[Callable[[], None]] = None,
     ) -> Tuple[bool, PrunedRecord]:
         pruned: PrunedRecord = {}
         queue: deque[RunConstraint] = deque()
@@ -146,7 +136,12 @@ class ExtendedAC3Propagator:
             initial_runs = csp.runs
         else:
             positions = [seed_pos, *(changed_positions or [])]
-            initial_runs = [r for p in positions for r in (csp.variables[p].across_run, csp.variables[p].down_run) if r is not None]
+            initial_runs = [
+                r
+                for p in positions
+                for r in (csp.variables[p].across_run, csp.variables[p].down_run)
+                if r is not None
+            ]
 
         for r in initial_runs:
             if r.run_id not in in_queue:
@@ -159,11 +154,11 @@ class ExtendedAC3Propagator:
             run = queue.popleft()
             in_queue.remove(run.run_id)
 
-            ok, changed_positions = cls._revise_run(run, assignment, domains, pruned, check_cancel)
+            ok, revised_positions = cls._revise_run(run, assignment, domains, pruned, check_cancel)
             if not ok:
                 return False, pruned
 
-            for ch_pos in changed_positions:
+            for ch_pos in revised_positions:
                 ch_var = csp.variables[ch_pos]
                 for neighbor_run in (ch_var.across_run, ch_var.down_run):
                     if (
@@ -183,7 +178,7 @@ class ExtendedAC3Propagator:
         assignment: Dict[Tuple[int, int], int],
         domains: DomainMap,
         pruned: PrunedRecord,
-        check_cancel=None,
+        check_cancel: Optional[Callable[[], None]] = None,
     ) -> Tuple[bool, List[Tuple[int, int]]]:
         changed: List[Tuple[int, int]] = []
         used_assigned: Set[int] = set()
@@ -211,7 +206,7 @@ class ExtendedAC3Propagator:
                     pruned.setdefault(p, []).extend(removed)
             return False, changed
 
-        # Check generalized arc support for each candidate value of each unassigned variable
+        # Kiem tra ton tai bo gia tri ho tro (Generalized Arc Consistency) cho tung ung vien
         k = len(unassigned)
         for idx, pos in enumerate(unassigned):
             current_dom = list(domains[pos])
@@ -248,7 +243,7 @@ class ExtendedAC3Propagator:
         if rem_vars == 0:
             return target_rem == 0
 
-        # Quick min/max residual sum bound check
+        # Kiem tra nhanh can tong phan du min/max chat de cat tia som
         remaining = [domain - used for domain in peer_doms[idx:]]
         if any(not domain for domain in remaining):
             return False

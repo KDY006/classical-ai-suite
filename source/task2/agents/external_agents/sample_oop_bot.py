@@ -1,4 +1,4 @@
-"""Example external student group bot using Protocol 1: subclassing BaseTankAgent."""
+"""Bot mau nhom ngoai chuan 1 (OOP): ke thua lop BaseTankAgent."""
 
 from __future__ import annotations
 
@@ -11,10 +11,13 @@ from task2.engine.game_state import GameState
 
 
 class ExternalGreedyStrikerBot(BaseTankAgent):
-    """Sample 1-ply greedy lookahead bot illustrating OOP external integration."""
+    """Bot tham lam nhin truoc 1 nuoc minh hoa tich hop chuan OOP."""
 
     def __init__(self) -> None:
-        super().__init__(name="Bot ngoài: Xung kích (OOP)")
+        super().__init__(
+            name="Bot ngoài: Xung kích (OOP)",
+            cli_name="Bot ngoai: Xung kich (OOP)",
+        )
 
     def choose_action(self, state: GameState) -> str:
         t0 = time.perf_counter()

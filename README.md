@@ -2,9 +2,9 @@
 
 Dự án cài đặt trọn vẹn 3 bài toán Trí tuệ Nhân tạo cổ điển theo nguyên lý **Lập trình hướng đối tượng (OOP)** bằng ngôn ngữ Python cho môn học **503043 – Introduction to Artificial Intelligence** (Khoa Công nghệ Thông tin – Đại học Tôn Đức Thắng):
 
-- **Task 1 (3.0 điểm) – Bài toán N-Queen**: Mô hình hóa Logic mệnh đề dạng chuẩn hội (CNF) giải bằng bộ giải `Glucose3` (`PySAT`), Tìm kiếm cục bộ `Min-Conflicts` kết hợp Heuristic đề xuất (*Max-Conflict + Danh sách cấm ngắn hạn Tabu & Điều kiện ân xá Aspiration*), kèm giao diện bàn cờ trực quan `gui.py`.
-- **Task 2 (3.0 điểm) – Trò chơi Tank Battle (Tìm kiếm đối kháng)**: Mô hình hóa trò chơi tổng bằng không (*Zero-Sum Game*) với trạng thái bất biến (*Immutable GameState*) và cơ chế đạn bay xuyên lượt 3 ô/chu kỳ kiểm tra va chạm từng ô một; thực nghiệm 2 tầng đối sánh 4 cấu hình thuật toán (`Minimax`, `Alpha-Beta`, `Heuristic Minimax`, `Heuristic Alpha-Beta`), kèm giao diện **PyGame Arena** tích hợp bộ sprite Kenney (CC0) và cơ chế nạp động thuật toán của nhóm sinh viên khác vào thi đấu.
-- **Task 3 (3.0 điểm) – Trò chơi Kakuro (Thỏa mãn ràng buộc – CSP)**: Mô hình hóa CSP $\langle X, D, C \rangle$, kết hợp tiền xử lý tổ hợp tổng (*Sum Partitions*), lan truyền ràng buộc (*Forward Checking* & *Extended AC-3*) với bộ ba heuristic (*MRV*, *Degree*, *LCV*), kèm giao diện **PyGame Visualizer & Board Editor** trực quan hóa miền ứng viên $\{1..9\}$, hiệu ứng cắt tỉa miền, quay lui và trình soạn thảo câu đố tùy chỉnh.
+- **Task 1 (3.0 điểm) – Bài toán N-Queen**: Mô hình hóa Logic mệnh đề dạng chuẩn hội (CNF) giải bằng bộ giải `Glucose3` (`PySAT`), Tìm kiếm cục bộ `Min-Conflicts` kết hợp Heuristic đề xuất (*Max-Conflict + Danh sách cấm Tabu thích nghi, Điều kiện ân xá & Phá cực trị cục bộ*), kèm giao diện PyGame tối giản `ui_nqueen.py` tuân thủ `UI.md`.
+- **Task 2 (3.0 điểm) – Trò chơi Tank Battle (Tìm kiếm đối kháng)**: Mô hình hóa trò chơi tổng bằng không (*Zero-Sum Game*) với trạng thái bất biến (*Immutable GameState*) và cơ chế đạn bay xuyên lượt 3 ô/chu kỳ kiểm tra va chạm từng ô một; thực nghiệm 2 tầng đối sánh 4 cấu hình thuật toán (`Minimax`, `Alpha-Beta`, `Heuristic Minimax`, `Heuristic Alpha-Beta` kết hợp BFS né tường thép, Move Ordering và Transposition Table), kèm giao diện **PyGame tối giản** (`pygame_arena.py` theo `UI.md`) và cơ chế nạp động thuật toán của nhóm sinh viên khác vào thi đấu.
+- **Task 3 (3.0 điểm) – Trò chơi Kakuro (Thỏa mãn ràng buộc – CSP)**: Mô hình hóa CSP $\langle X, D, C \rangle$, kết hợp tiền xử lý tổ hợp tổng (*Sum Partitions*), lan truyền ràng buộc (*Forward Checking* & *Extended AC-3 / GAC*) với bộ ba heuristic (*MRV*, *Degree*, *LCV* 1 bước), kèm giao diện **PyGame tối giản** (`visualizer_ui.py` theo `UI.md`) trực quan hóa miền ứng viên $\{1..9\}$, gạch chéo cắt tỉa, quay lui và trình soạn thảo bảng tùy chỉnh (`BoardEditor`).
 - **Task 4 (1.0 điểm) – Báo cáo khoa học IEEE & Video Demo**: Mã nguồn báo cáo chuẩn hội nghị IEEE 2 cột (tối đa 05 trang) biên dịch trên Overleaf.
 
 ---
@@ -50,7 +50,12 @@ AI_final_<Project_Group_ID>_<Student_ID>/
 ├── requirement.txt                     # Danh sách thư viện Python cần thiết
 ├── DEBAI.md                            # Bản dịch nguyên văn đề bài gốc sang tiếng Việt
 ├── PHANTICH_DEBAI.md                   # Phân tích chuyên sâu đề bài, phân công 4 thành viên & vấn đáp
-├── report.pdf                          # Báo cáo khoa học chuẩn hội nghị IEEE 2 cột (04 trang)
+├── UI.md                               # Quy ước thiết kế giao diện PyGame phong cách Tối giản (Minimalism)
+├── TASK1.md                            # Tài liệu tổng hợp lý thuyết, mã nguồn & thực nghiệm Nhiệm vụ 1
+├── TASK2.md                            # Tài liệu tổng hợp lý thuyết, mã nguồn & thực nghiệm Nhiệm vụ 2
+├── TASK3.md                            # Tài liệu tổng hợp lý thuyết, mã nguồn & thực nghiệm Nhiệm vụ 3
+├── report.md                           # Toàn văn báo cáo Task 4 & mã nguồn LaTeX/BibTeX import Overleaf
+├── report.pdf                          # Báo cáo khoa học chuẩn hội nghị IEEE 2 cột (<= 5 trang)
 ├── demo.txt                            # File chứa đường dẫn URL tới video demo của nhóm
 ├── report/                             # Thư mục mã nguồn LaTeX báo cáo khoa học chuẩn IEEE (Task 4)
 │   ├── main.tex                        # Mã nguồn LaTeX mẫu hội nghị IEEE 2 cột (<= 5 trang)
@@ -60,12 +65,13 @@ AI_final_<Project_Group_ID>_<Student_ID>/
     ├── README.md                       # Hướng dẫn chạy trực tiếp từ bên trong thư mục source/
     ├── requirement.txt                 # Bản sao danh sách thư viện phục vụ chạy độc lập
     ├── task1/                          # TASK 1: Bài toán N-Queen (SAT Glucose3 & Min-Conflicts)
-    │   ├── board.py                    # Lớp NQueenBoard biểu diễn bàn cờ & đếm xung đột O(1)
-    │   ├── cnf_encoder.py              # Lớp NQueenCNFEncoder sinh ràng buộc & chuyển đổi CNF
+    │   ├── base_solver.py              # Lớp trừu tượng BaseNQueenSolver thống nhất hợp đồng OOP
+    │   ├── board.py                    # Lớp NQueenBoard biểu diễn bàn cờ & đếm xung đột O(1) mảng phẳng
+    │   ├── cnf_encoder.py              # Lớp NQueenCNFEncoder phát hiện ràng buộc & chuyển đổi CNF
     │   ├── sat_solver.py               # Lớp Glucose3NQueenSolver giải CNF bằng PySAT Glucose3
-    │   ├── min_conflicts.py            # Lớp MinConflictsSolver (bản chuẩn & bản Max-Conflict + Tabu)
-    │   ├── gui.py                      # Giao diện Tkinter giải & vẽ trực quan bàn cờ N-Queen
-    │   ├── main_task1.py               # Chương trình chạy thực nghiệm nhanh Task 1 trên dòng lệnh
+    │   ├── min_conflicts.py            # Lớp MinConflictsSolver (chuẩn, đối chứng & Tabu thích nghi)
+    │   ├── ui_nqueen.py                # Giao diện PyGame tối giản (1160x720) tuân thủ UI.md
+    │   ├── main_task1.py               # Điểm khởi chạy giao diện PyGame, CLI & bộ kiểm chứng Task 1
     │   └── experiments_task1.ipynb     # Jupyter Notebook thực nghiệm & biểu đồ Task 1 (giữ nguyên output)
     ├── task2/                          # TASK 2: Trò chơi Tank Battle (Tìm kiếm đối kháng & PyGame)
     │   ├── config.py                   # Hằng số trò chơi (Tank=6 HP, Base=9 HP, Wall=3 HP, Speed=3)
@@ -85,9 +91,8 @@ AI_final_<Project_Group_ID>_<Student_ID>/
     │   │       ├── sample_oop_bot.py   # Bot mẫu nhóm ngoài theo chuẩn kế thừa lớp BaseTankAgent
     │   │       └── sample_dict_bot.py  # Bot mẫu nhóm ngoài theo chuẩn hàm độc lập get_action(obs_dict)
     │   ├── ui/
-    │   │   ├── assets/                 # Bộ sprite Kenney Top-down Tanks Redux (CC0) kèm CREDITS.txt
-    │   │   └── pygame_arena.py         # Giao diện đồ họa PyGame Arena 2 cột tự co giãn
-    │   ├── main_task2.py               # Điểm khởi chạy giao diện PyGame hoặc benchmark dòng lệnh Task 2
+    │   │   └── pygame_arena.py         # Giao diện PyGame vector tối giản (1160x720) tuân thủ UI.md
+    │   ├── main_task2.py               # Điểm khởi chạy PyGame tối giản, CLI không dấu & --verify Task 2
     │   └── benchmark_task2.ipynb       # Jupyter Notebook thực nghiệm 4 cấu hình Task 2 (giữ nguyên output)
     └── task3/                          # TASK 3: Câu đố Kakuro (CSP, Visualizer & Board Editor)
         ├── maps/                       # Dữ liệu bản đồ Kakuro định dạng JSON
@@ -99,8 +104,8 @@ AI_final_<Project_Group_ID>_<Student_ID>/
         ├── propagation.py              # Tiền xử lý Sum Partitions, Forward Checking & Extended AC-3
         ├── solver.py                   # Bộ giải KakuroSolver tích hợp MRV, Degree Heuristic và LCV
         ├── board_editor.py             # Trình chỉnh sửa, Bulk Edit, sinh đề ngẫu nhiên & lưu/nạp JSON
-        ├── visualizer_ui.py            # Giao diện PyGame hiển thị miền {1..9}, cắt tỉa, quay lui & soạn thảo
-        ├── main_task3.py               # Điểm khởi chạy giao diện Kakuro Visualizer hoặc benchmark CLI
+        ├── visualizer_ui.py            # Giao diện PyGame tối giản (1160x720) tuân thủ UI.md & trình soạn thảo
+        ├── main_task3.py               # Điểm khởi chạy PyGame tối giản, --explain-csp, CLI & --verify Task 3
         └── experiments_task3.ipynb     # Jupyter Notebook đánh giá Task 3 (giữ nguyên output)
 ```
 
@@ -114,37 +119,40 @@ AI_final_<Project_Group_ID>_<Student_ID>/
 
 ### 3.1. Chạy Task 1: Bài Toán N-Queen (`Glucose3` SAT & `Min-Conflicts`)
 
-#### A. Mở giao diện đồ họa bàn cờ N-Queen
-```bash
-python source/task1/gui.py
-```
-- Chọn kích thước bàn cờ $N \in [4, 50]$, chọn thuật toán (`Glucose3`, `Min-Conflicts`, hoặc `Max-Conflict + Tabu`) rồi nhấn **Giải**.
-
-#### B. Chạy chương trình thực nghiệm dòng lệnh (CLI)
+#### A. Mở giao diện đồ họa PyGame tối giản (tuân thủ `UI.md`)
 ```bash
 python source/task1/main_task1.py
 ```
-- Tuỳ chỉnh tham số thực nghiệm:
+- Chọn kích thước bàn cờ $N \in [4, 100]$, chọn thuật toán (`Glucose3 (SAT - CNF)`, `Min-Conflicts tiêu chuẩn`, `Max-Conflict thuần`, hoặc `Max-Conflict + Tabu thích nghi`), hỗ trợ **Giải ngay**, **Ngẫu nhiên**, **Từng bước**, **Phát / Tạm dừng**, thanh tốc độ và **So sánh** nhanh chuẩn vs đề xuất trên cùng bàn cờ.
+
+#### B. Chạy thực nghiệm dòng lệnh (CLI tiếng Việt không dấu) & kiểm chứng tự động
 ```bash
-python source/task1/main_task1.py --sat-sizes 4 8 16 32 50 --mc-sizes 8 16 32 64 100 150 --trials 30 --max-steps 2500
+# Chạy trọn bộ thực nghiệm (minh họa CNF, Glucose3, đối sánh 3 chiến lược Min-Conflicts)
+python source/task1/main_task1.py --cli
+
+# Chạy bộ kiểm chứng toán học & hiệu năng tự động
+python source/task1/main_task1.py --verify
+
+# Tuỳ chỉnh tham số thực nghiệm CLI
+python source/task1/main_task1.py --cli --sat-sizes 4 8 16 32 50 --mc-sizes 8 16 32 64 100 150 200 --trials 50
 ```
 
 ---
 
-### 3.2. Chạy Task 2: Trò Chơi Tank Battle (Tìm Kiếm Đối Kháng & PyGame Arena)
+### 3.2. Chạy Task 2: Trò Chơi Tank Battle (Tìm Kiếm Đối Kháng & PyGame Tối Giản)
 
-#### A. Khởi chạy Giao diện Đồ họa PyGame Arena (Yêu cầu 2.3)
+#### A. Khởi chạy Giao diện Đồ họa PyGame Tối giản (Yêu cầu 2.3 — tuân thủ `UI.md`)
 ```bash
 python source/task2/main_task2.py
 ```
-**Hướng dẫn sử dụng bảng điều khiển tiếng Việt trên cửa sổ PyGame Arena:**
-- **Nút `BẢN ĐỒ KỊCH BẢN` (`Đấu trường Cổ điển (9x9)`, ...)**: Nhấn để chuyển đổi giữa 6 kịch bản bản đồ Tầng 1 (*Tàn cuộc Đối đầu*, *Tàn cuộc Đua phá căn cứ*, *Tàn cuộc Phục kích góc* `7x7`) và Tầng 2 (*Đấu trường Cổ điển 9x9*, *Giao lộ Hỏa lực 9x9*, *Công thành Pháo đài 11x11*).
-- **Nút `MAX: ...` (Xe Xanh)** và **`MIN: ...` (Xe Đỏ)**: Nhấn để chọn bộ điều khiển cho từng phe: `Heuristic Alpha-Beta (sâu 4)`, `Heuristic Minimax (sâu 3)`, `Alpha-Beta thuần (cắt 6)`, `Minimax thuần (cắt 5)`, `Người chơi (Bàn phím)` (`WASD`/mũi tên di chuyển + `Space` bắn + `Enter` chờ), hoặc các bot nhóm ngoài trong `external_agents/`.
-- **Các nút điều khiển trận đấu**: `Tự chạy` / `Tạm dừng`, `Từng bước` (chạy từng lượt một), `Đặt lại` (khởi động lại ván), `-` / `+` (chỉnh tốc độ ms/lượt), và `Nạp lại Bot` (quét nạp nóng bot mới trong `external_agents/`).
+**Hướng dẫn sử dụng bảng điều khiển tiếng Việt trên cửa sổ PyGame (`1160 × 720`):**
+- **Cấu hình:** Nhấn `Bản đồ: ...` để đổi giữa 6 kịch bản Tầng 1 (*7x7*) và Tầng 2 (*9x9, 11x11*); nhấn `MAX: ...` / `MIN: ...` để chọn đủ 4 cấu hình thuật toán, `Người chơi (Bàn phím)` (`WASD`/mũi tên đi, `Space` bắn, `Enter` chờ) hoặc các bot nhóm ngoài; nhấn `Nạp lại Bot nhóm ngoài` để quét nạp nóng từ `external_agents/`.
+- **Điều khiển:** `Tự chạy` / `Tạm dừng` (`Space`), `Từng bước` (`→`), `Đặt lại` (`R`) và thanh trượt tốc độ (`60–800 ms/lượt`).
 
-#### B. Chạy Benchmark đối sánh 4 thuật toán trên Terminal (CLI)
+#### B. Chạy Benchmark CLI (tiếng Việt không dấu) & Kiểm chứng tự động (`--verify`)
 ```bash
 python source/task2/main_task2.py --cli
+python source/task2/main_task2.py --verify
 ```
 
 #### C. Tích hợp thuật toán của nhóm sinh viên khác vào thi đấu (Yêu cầu 2.3)
@@ -154,27 +162,27 @@ Chép file `.py` của nhóm khác vào `source/task2/agents/external_agents/` v
 
 ---
 
-### 3.3. Chạy Task 3: Trò Chơi Kakuro (Bộ Giải CSP, Visualizer & Board Editor)
+### 3.3. Chạy Task 3: Trò Chơi Kakuro (Bộ Giải CSP, Visualizer & Board Editor Tối Giản)
 
-#### A. Khởi chạy Giao diện PyGame Kakuro Visualizer & Board Editor (Yêu cầu 3.3)
+#### A. Khởi chạy Giao diện PyGame Tối giản (Yêu cầu 3.3 — tuân thủ `UI.md`)
 ```bash
 python source/task3/main_task3.py
 ```
-**Hướng dẫn sử dụng bảng điều khiển trên cửa sổ Kakuro Visualizer:**
+**Hướng dẫn sử dụng bảng điều khiển tiếng Việt trên cửa sổ `1160 × 720` (3 tông màu tối giản):**
 - **Trực quan hóa miền giá trị, cắt tỉa & quay lui**:
-  - Ô trắng chưa gán hiển thị **lưới ứng viên $3 \times 3$ (`1..9`)** còn lại trong miền $D_i$.
-  - **Viền Xanh Dương**: Ô biến đang được chọn (`SELECT_VAR` / `ASSIGN`).
-  - **Nền Đỏ Nhạt + Số Đỏ gạch ngang**: Ứng viên bị loại bởi **Constraint Propagation** (`PRUNE`); chữ `x` báo miền rỗng.
-  - **Nền Cam**: Từ chối giá trị, ngõ cụt hoặc bước **Backtrack** khôi phục miền.
-  - **Chữ Tím (`G`)**: Chữ số cho trước (`given digit`); **Nền Xanh Lá**: Đã tìm được nghiệm hợp lệ (`SOLVED`).
-- **Nút điều khiển ở `Chế độ Giải`**:
-  - `Đổi bảng mẫu` (luân phiên `5x5`, `9x9`, `6x6`, `8x8`), nút chọn chế độ giải (`Nâng cao: AC-3 mở rộng + MRV/Bậc/LCV`, `Quay lui + Kiểm tra tiến + MRV`, `Quay lui cơ bản`), `Tự chạy` / `Tạm dừng` (`Space`), `Bước trước` / `Bước tiếp` (mũi tên `Trái`/`Phải`), `Đặt lại` (`0`), `Bước cuối`, thanh kéo `Tốc độ phát`, `Giải lại`, và `Sửa bảng` / `Dừng & Sửa` (`Esc` – dừng luồng giải nền để chuyển sang soạn thảo bảng).
-- **Nút điều khiển ở `Chế độ Soạn thảo`**:
-  - Cho phép `Tạo bảng` mới `3x3`–`9x9`, `Đổi thành Ô trắng` / `Đổi thành Ô đen`, sửa `Tổng ngang` / `Tổng dọc`, nhập `Số cho trước`, `Sửa nhanh toàn bảng`, `Sinh ngẫu nhiên gợi ý` đảm bảo có nghiệm, `Kiểm tra hợp lệ`, `Lưu JSON` / `Mở JSON` trong `maps/custom/` và `GIẢI BẢNG HIỆN TẠI`.
+  - Ô trắng chưa gán hiển thị **lưới ứng viên $3 \times 3$ (`1..9`)** mảnh màu xám trung tính.
+  - **Viền Đậm (`#111827`) trên nền Xám Nhạt**: Ô biến đang được chọn (`SELECT_VAR` / `ASSIGN`).
+  - **Số Đỏ gạch chéo (`#C83E37`)**: Ứng viên bị loại bởi **Constraint Propagation** (`PRUNE`); dấu `×` đỏ trên nền đỏ nhạt báo miền rỗng.
+  - **Nền Đỏ Nhạt + Viền Đỏ**: Từ chối giá trị (`REJECT`), ngõ cụt (`FAILURE`) hoặc bước **Backtrack** khôi phục miền.
+  - **Số Đen kèm góc `G`**: Chữ số cho trước (`given`); **Số Xanh Ngọc Trầm (`#0F766E`)**: Chữ số đã gán hợp lệ (toàn lưới phủ xanh ngọc nhạt khi `SOLVED`).
+- **Chế độ Giải**: Chọn nhanh bảng mẫu (`5×5`, `6×6`, `8×8`, `9×9`), chọn 3 chế độ giải (`Quay lui cơ bản`, `Kiểm tra tiến + MRV`, `AC-3 mở rộng + MRV/Bậc/LCV`), điều khiển `Phát` / `Tạm dừng` (`Space`), `Bước tiếp` / `Trước` (`Phải`/`Trái`), `Đặt lại` (`0`), `Bước cuối`, `Giải lại`, thanh tốc độ (`25–1000 ms/bước`) và nút `Sửa bảng` / `Dừng & Sửa bảng` (`Esc`).
+- **Chế độ Soạn thảo (`BoardEditor`) & Sửa nhanh (`Bulk Edit`)**: Tạo bảng mới `3×3`–`9×9`, đổi `Ô trắng` / `Ô đen / gợi ý`, chỉnh `Tổng ngang` / `Tổng dọc`, nhập `Số cho trước`, `Sửa nhanh (Bulk)`, `Sinh gợi ý mới` đảm bảo có nghiệm, `Kiểm tra hợp lệ`, `Lưu JSON` / `Mở JSON` trong `maps/custom/` và `Giải bảng hiện tại`.
 
-#### B. Chạy Benchmark đánh giá bộ giải Kakuro trên Terminal (CLI)
+#### B. Chạy CLI (tiếng Việt không dấu), giải thích CSP & kiểm chứng 22 tiêu chí
 ```bash
-python source/task3/main_task3.py --cli
+python source/task3/main_task3.py --explain-csp
+python source/task3/main_task3.py --cli --trials 10
+python source/task3/main_task3.py --verify
 ```
 
 ---
@@ -192,10 +200,10 @@ Mở trực tiếp trên VS Code hoặc chạy `jupyter lab` tại thư mục g�
 
 ## 5. Biên Dịch Báo Cáo IEEE (Task 4) & Quy Cách Đóng Gói Nộp Bài
 
-1. **Biên dịch `report.pdf` trên Overleaf**:
-   - Tải toàn bộ thư mục `report/` (`main.tex`, `references.bib` và thư mục `figures/`) lên Overleaf.
-   - Kiểm tra lại Họ tên, MSSV và Email của 4 thành viên (và tên giảng viên hướng dẫn **TS. Trịnh Hùng Cường** ở vị trí tác giả cuối cùng) đã điền sẵn trong khối `\author{...}` của `main.tex`.
-   - Biên dịch và tải file PDF đặt vào thư mục gốc dưới tên `report.pdf`.
+1. **Biên dịch `report.pdf` trên Overleaf (xem chi tiết tại `report.md`)**:
+   - Tải toàn bộ thư mục `report/` (`main.tex`, `references.bib` và thư mục `figures/` gồm 8 ảnh PNG) lên Overleaf — hoặc copy–paste trực tiếp khối `main.tex` và `references.bib` từ `report.md`.
+   - Chọn trình biên dịch **pdfLaTeX** (mặc định của Overleaf), kiểm tra lại Họ tên, MSSV, Email của 4 thành viên và giảng viên hướng dẫn **TS. Trịnh Hùng Cường** ở vị trí tác giả cuối cùng trong khối `\author{...}`.
+   - Biên dịch, xác nhận tổng số trang $\le 5$ trang (2 cột chuẩn IEEE), tải file PDF và đặt tại thư mục gốc dưới tên `report.pdf`.
 2. **Cập nhật `demo.txt` & Đóng gói cá nhân**:
    - Dán URL công khai của video demo vào `demo.txt`.
    - Khi nén bài nộp cá nhân, tạo thư mục đúng định dạng `AI_final_<Project Group ID>_<Student ID>` chứa đủ `source/`, `report.pdf`, `demo.txt` (cùng `README.md` và `requirement.txt`), nén thành file `.zip` nộp lên hệ thống trước hạn.

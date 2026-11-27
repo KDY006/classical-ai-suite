@@ -1,4 +1,4 @@
-"""Pure Alpha-Beta search with no heuristic leaf evaluation."""
+"""Cau hinh 2: Thuat toan Alpha-Beta thuan tuy (cat tia, khong heuristic)."""
 
 from __future__ import annotations
 
@@ -13,12 +13,15 @@ from .base_agent import BaseTankAgent, SearchMetrics
 
 
 class AlphaBetaAgent(BaseTankAgent):
+    """Tac tu cat tia Alpha-Beta chuan, bao toan dung gia tri toi uu cua Minimax."""
+
     def __init__(
         self,
-        max_ply_cap: Optional[int] = 7,
-        name: str = "Alpha-Beta Search",
+        max_ply_cap: Optional[int] = 6,
+        name: str = "Alpha-Beta thuần",
+        cli_name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)
+        super().__init__(name=name, cli_name=cli_name)
         self.max_ply_cap = max_ply_cap
         self._explored = 0
         self._pruned = 0
@@ -30,13 +33,7 @@ class AlphaBetaAgent(BaseTankAgent):
         self._pruned = 0
         self._max_depth_seen = 0
         root = state.current_player
-        best_value, best_action = self._search(
-            state,
-            0,
-            -math.inf,
-            math.inf,
-            root,
-        )
+        best_value, best_action = self._search(state, 0, -math.inf, math.inf, root)
         elapsed_ms = (time.perf_counter() - started) * 1000.0
         self.last_metrics = SearchMetrics(
             explored_states=self._explored,
@@ -62,7 +59,7 @@ class AlphaBetaAgent(BaseTankAgent):
         if state.is_terminal():
             return self._terminal_value(state, root_player, depth), STAY
         if self.max_ply_cap is not None and depth >= self.max_ply_cap:
-            return state.utility(root_player) * 0.0, STAY
+            return 0.0, STAY
 
         legal = state.legal_actions()
         maximizing = state.current_player == root_player

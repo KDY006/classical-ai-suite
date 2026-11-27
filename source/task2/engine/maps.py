@@ -1,4 +1,4 @@
-"""Validated predefined maps for endgame experiments and full arenas."""
+"""Bo 6 kich ban ban do 2 tang (Tan cuoc 7x7 va Dau truong 9x9, 11x11)."""
 
 from __future__ import annotations
 
@@ -22,10 +22,11 @@ from .game_state import GameState
 
 @dataclass(frozen=True, slots=True)
 class MapScenario:
-    """Metadata and a fresh-state factory for a reproducible scenario."""
+    """Thong tin kich ban ban do va ham khoi tao trang thai ban dau."""
 
     key: str
     title: str
+    cli_title: str
     tier: str
     description: str
     builder: Callable[[], GameState]
@@ -42,9 +43,9 @@ def _parse_ascii_map(
     wall_hp: int = WALL_INITIAL_HP,
     max_plies: int = 120,
 ) -> GameState:
-    """Parse ``. B # 1 2 M N`` as empty, brick, steel, tanks, and bases."""
+    """Phan tich ban do ky tu: . trong, B gach, # thep, 1/2 xe tang, M/N can cu."""
     if not grid_lines or not grid_lines[0]:
-        raise ValueError("Map must contain at least one non-empty row.")
+        raise ValueError("Ban do phai co it nhat mot hang khac rong")
     rows = len(grid_lines)
     cols = len(grid_lines[0])
     tanks: Dict[int, Tank] = {}
@@ -56,10 +57,10 @@ def _parse_ascii_map(
 
     for row, line in enumerate(grid_lines):
         if len(line) != cols:
-            raise ValueError(f"Inconsistent map row length at row {row}.")
+            raise ValueError(f"Do dai hang {row} cua ban do khong dong nhat")
         for col, marker in enumerate(line):
             if marker not in accepted:
-                raise ValueError(f"Unknown map marker {marker!r} at ({row}, {col}).")
+                raise ValueError(f"Ky tu ban do khong hop le {marker!r} tai ({row}, {col})")
             if marker in markers:
                 markers[marker] += 1
             if marker == "B":
@@ -77,7 +78,7 @@ def _parse_ascii_map(
 
     invalid_markers = {marker: count for marker, count in markers.items() if count != 1}
     if invalid_markers:
-        raise ValueError(f"Map must contain exactly one of each tank/base marker: {invalid_markers}")
+        raise ValueError(f"Ban do phai co dung 1 ky hieu cho moi xe tang/can cu: {invalid_markers}")
 
     return GameState(
         rows=rows,
@@ -221,6 +222,7 @@ SCENARIOS: List[MapScenario] = [
     MapScenario(
         key="classic_9x9",
         title="Đấu trường Cổ điển (9x9)",
+        cli_title="Dau truong Co dien (9x9)",
         tier="tier2",
         description="Bản đồ 9x9 đối xứng đầy đủ máu với tường gạch bảo vệ căn cứ.",
         builder=build_classic_arena_9x9,
@@ -228,13 +230,15 @@ SCENARIOS: List[MapScenario] = [
     MapScenario(
         key="crossfire_9x9",
         title="Giao lộ Hỏa lực (9x9)",
+        cli_title="Giao lo Hoa luc (9x9)",
         tier="tier2",
-        description="Hành lang bắn mở ưu tiên chiếm đường ngắm thẳng và né đạn.",
+        description="Đấu trường 9x9 có trụ thép trung tâm đòi hỏi bọc sườn và né đạn.",
         builder=build_open_crossfire_9x9,
     ),
     MapScenario(
         key="fortress_11x11",
         title="Công thành Pháo đài (11x11)",
+        cli_title="Cong thanh Phao dai (11x11)",
         tier="tier2",
         description="Đấu trường lớn 11x11 nhiều lớp tường gạch và trụ thép bất tử.",
         builder=build_fortress_11x11,
@@ -242,6 +246,7 @@ SCENARIOS: List[MapScenario] = [
     MapScenario(
         key="endgame_duel_7x7",
         title="Tàn cuộc Đối đầu (7x7)",
+        cli_title="Tan cuoc Doi dau (7x7)",
         tier="tier1",
         description="Thế cờ tàn cuộc ít máu để đối sánh chính xác cả 4 thuật toán.",
         builder=build_endgame_duel_7x7,
@@ -249,6 +254,7 @@ SCENARIOS: List[MapScenario] = [
     MapScenario(
         key="endgame_race_7x7",
         title="Tàn cuộc Đua phá căn cứ (7x7)",
+        cli_title="Tan cuoc Dua pha can cu (7x7)",
         tier="tier1",
         description="Thế cờ đua bắn tỉa căn cứ bất đối xứng trong 6 lượt đi.",
         builder=build_endgame_base_race_7x7,
@@ -256,6 +262,7 @@ SCENARIOS: List[MapScenario] = [
     MapScenario(
         key="endgame_ambush_7x7",
         title="Tàn cuộc Phục kích góc (7x7)",
+        cli_title="Tan cuoc Phuc kich goc (7x7)",
         tier="tier1",
         description="Thế cờ cận chiến né đạn và phản kích tầm gần.",
         builder=build_endgame_ambush_7x7,
@@ -273,4 +280,4 @@ def get_scenario(key: str) -> MapScenario:
     for scenario in SCENARIOS:
         if scenario.key == key:
             return scenario
-    raise KeyError(f"Unknown scenario key: {key}")
+    raise KeyError(f"Khong tim thay kich ban ban do: {key}")

@@ -1,4 +1,4 @@
-"""Immutable game entities used by the Tank Battle transition model."""
+"""Cac lop thuc the bat bien tren luoi trong tro choi Dau Tang."""
 
 from __future__ import annotations
 
@@ -8,15 +8,15 @@ from ..config import (
     BASE_INITIAL_HP,
     DAMAGE_PER_HIT,
     DIRECTIONS,
+    DIR_UP,
     PLAYER_IDS,
     TANK_INITIAL_HP,
     WALL_INITIAL_HP,
-    DIR_UP,
 )
 
 
 class Entity:
-    """Common behavior for immutable, grid-positioned game entities."""
+    """Hanh vi dung chung cho cac thuc the bat bien dat tren o luoi."""
 
     row: int
     col: int
@@ -31,9 +31,9 @@ class Entity:
         return not self.destructible or self.hp > 0
 
     def damaged(self, amount: int = DAMAGE_PER_HIT) -> tuple[Entity, bool]:
-        """Return a damaged copy and whether this hit destroyed the entity."""
+        """Tra ve ban sao sau khi nhan sat thuong va co bi pha huy hay khong."""
         if amount < 0:
-            raise ValueError("Damage amount cannot be negative.")
+            raise ValueError("Luong sat thuong khong duoc am")
         if not self.destructible or amount == 0:
             return self, False
 
@@ -43,12 +43,12 @@ class Entity:
         return self._with_hp(updated_hp), self.hp > 0 and updated_hp == 0
 
     def _with_hp(self, hp: int) -> Entity:
-        raise NotImplementedError(f"{type(self).__name__} does not implement immutable damage.")
+        raise NotImplementedError(f"{type(self).__name__} chua cai dat cap nhat HP bat bien")
 
 
 @dataclass(frozen=True, slots=True)
 class Tank(Entity):
-    """A player's tank, position, facing, and remaining hit points."""
+    """Thuc the xe tang cua mot phe gom toa do, huong quay nong va HP."""
 
     player_id: int
     row: int
@@ -58,9 +58,9 @@ class Tank(Entity):
 
     def __post_init__(self) -> None:
         if self.player_id not in PLAYER_IDS:
-            raise ValueError(f"Unknown player ID: {self.player_id}")
+            raise ValueError(f"Ma nguoi choi khong hop le: {self.player_id}")
         if self.facing not in DIRECTIONS:
-            raise ValueError(f"Unknown tank direction: {self.facing}")
+            raise ValueError(f"Huong quay xe tang khong hop le: {self.facing}")
         _validate_position_and_hp(self.row, self.col, self.hp)
 
     def _with_hp(self, hp: int) -> Tank:
@@ -72,7 +72,7 @@ class Tank(Entity):
 
 @dataclass(frozen=True, slots=True)
 class Base(Entity):
-    """A player's destructible headquarters."""
+    """Thuc the can cu co the bi pha huy cua mot phe."""
 
     player_id: int
     row: int
@@ -81,7 +81,7 @@ class Base(Entity):
 
     def __post_init__(self) -> None:
         if self.player_id not in PLAYER_IDS:
-            raise ValueError(f"Unknown player ID: {self.player_id}")
+            raise ValueError(f"Ma nguoi choi khong hop le: {self.player_id}")
         _validate_position_and_hp(self.row, self.col, self.hp)
 
     def _with_hp(self, hp: int) -> Base:
@@ -93,7 +93,7 @@ class Base(Entity):
 
 @dataclass(frozen=True, slots=True)
 class BrickWall(Entity):
-    """A destructible wall segment."""
+    """Tuong gach co sinh luc 3 HP, giam 1 HP sau moi phat trung dan."""
 
     row: int
     col: int
@@ -111,7 +111,7 @@ class BrickWall(Entity):
 
 @dataclass(frozen=True, slots=True)
 class SteelWall(Entity):
-    """An indestructible wall segment."""
+    """Tuong thep bat tu chan di chuyen va chan dan."""
 
     row: int
     col: int
@@ -126,7 +126,7 @@ class SteelWall(Entity):
 
     def __post_init__(self) -> None:
         if self.row < 0 or self.col < 0:
-            raise ValueError("Entity coordinates cannot be negative.")
+            raise ValueError("Toa do thuc the khong duoc am")
 
     def _with_hp(self, hp: int) -> SteelWall:
         return self
@@ -137,7 +137,7 @@ class SteelWall(Entity):
 
 @dataclass(frozen=True, slots=True)
 class Bullet:
-    """A persistent projectile advanced cell-by-cell by the game engine."""
+    """Vien dan ton tai xuyen luot, bay toi da 3 o moi chu ky tung o mot."""
 
     owner_id: int
     row: int
@@ -147,11 +147,11 @@ class Bullet:
 
     def __post_init__(self) -> None:
         if self.owner_id not in PLAYER_IDS:
-            raise ValueError(f"Unknown bullet owner: {self.owner_id}")
+            raise ValueError(f"Chu so huu dan khong hop le: {self.owner_id}")
         if self.direction not in DIRECTIONS:
-            raise ValueError(f"Unknown bullet direction: {self.direction}")
+            raise ValueError(f"Huong dan bay khong hop le: {self.direction}")
         if self.row < 0 or self.col < 0:
-            raise ValueError("Bullet coordinates cannot be negative.")
+            raise ValueError("Toa do vien dan khong duoc am")
 
     def clone(self) -> Bullet:
         return self
@@ -159,6 +159,6 @@ class Bullet:
 
 def _validate_position_and_hp(row: int, col: int, hp: int) -> None:
     if row < 0 or col < 0:
-        raise ValueError("Entity coordinates cannot be negative.")
+        raise ValueError("Toa do thuc the khong duoc am")
     if hp < 0:
-        raise ValueError("Hit points cannot be negative.")
+        raise ValueError("Chi so sinh luc HP khong duoc am")

@@ -1,4 +1,4 @@
-"""Pure exact Minimax search."""
+"""Cau hinh 1: Thuat toan Minimax thuan tuy (khong cat tia, khong heuristic)."""
 
 from __future__ import annotations
 
@@ -13,12 +13,15 @@ from .base_agent import BaseTankAgent, SearchMetrics
 
 
 class MinimaxAgent(BaseTankAgent):
+    """Tac tu Minimax thuan tuy duyet toan bo cay den trang thai ket thuc hoac gioi han ply."""
+
     def __init__(
         self,
-        max_ply_cap: Optional[int] = 7,
-        name: str = "Minimax Search",
+        max_ply_cap: Optional[int] = 6,
+        name: str = "Minimax thuần",
+        cli_name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)
+        super().__init__(name=name, cli_name=cli_name)
         self.max_ply_cap = max_ply_cap
         self._explored = 0
         self._max_depth_seen = 0
@@ -52,7 +55,7 @@ class MinimaxAgent(BaseTankAgent):
         if state.is_terminal():
             return self._terminal_value(state, root_player, depth), STAY
         if self.max_ply_cap is not None and depth >= self.max_ply_cap:
-            return state.utility(root_player) * 0.0, STAY
+            return 0.0, STAY
 
         legal = state.legal_actions()
         maximizing = state.current_player == root_player

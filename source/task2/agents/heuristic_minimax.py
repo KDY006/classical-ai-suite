@@ -1,9 +1,10 @@
-"""Depth-limited Heuristic Minimax search."""
+"""Cau hinh 3: Thuat toan Heuristic Minimax cat tai do sau d."""
 
 from __future__ import annotations
 
 import math
 import time
+from typing import Optional
 
 from ..config import STAY
 from ..engine.game_engine import TankBattleEngine
@@ -13,14 +14,17 @@ from .evaluation import TacticalEvaluator
 
 
 class HeuristicMinimaxAgent(BaseTankAgent):
+    """Tac tu Minimax gioi han do sau ket hop ham luong gia chien thuat EVAL(s)."""
+
     def __init__(
         self,
         max_depth: int = 4,
         name: str = "Heuristic Minimax",
+        cli_name: Optional[str] = None,
     ) -> None:
-        super().__init__(name=name)
+        super().__init__(name=name, cli_name=cli_name)
         if max_depth < 1:
-            raise ValueError("max_depth must be at least 1.")
+            raise ValueError("Do sau tim kiem max_depth phai lon hon hoac bang 1")
         self.max_depth = max_depth
         self._explored = 0
         self._max_depth_seen = 0

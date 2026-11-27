@@ -22,34 +22,46 @@ pip install -r requirement.txt
 
 ### Task 1: Bài toán N-Queen (`Glucose3` SAT & `Min-Conflicts`)
 ```bash
-# Mở giao diện bàn cờ trực quan (Tkinter)
-python task1/gui.py
-
-# Chạy thực nghiệm dòng lệnh (Glucose3 N=4..50 & đối sánh Min-Conflicts N=8..100)
+# Mở giao diện PyGame tối giản (chạy ngay, từng bước, phát tự động, so sánh nhanh)
 python task1/main_task1.py
+
+# Chạy thực nghiệm đầy đủ trên dòng lệnh (tiếng Việt không dấu tránh lỗi font)
+python task1/main_task1.py --cli
+
+# Chạy bộ kiểm chứng tự động toán học và hiệu năng
+python task1/main_task1.py --verify
 ```
 - Notebook thực nghiệm (đã lưu đủ output tất cả các cell): `task1/experiments_task1.ipynb`.
 
-### Task 2: Trò chơi Tank Battle (Tìm kiếm đối kháng & Giao diện PyGame Arena)
+### Task 2: Trò chơi Tank Battle (Tìm kiếm đối kháng & Giao diện PyGame tối giản)
 ```bash
-# Mở giao diện đồ họa PyGame Arena (AI vs AI, Người vs AI, nạp bot nhóm ngoài)
+# Mở giao diện đồ họa PyGame tối giản (1160x720, AI vs AI, Người vs AI, nạp bot nhóm ngoài)
 python task2/main_task2.py
 
-# Chạy thực nghiệm đối sánh 4 cấu hình thuật toán trên dòng lệnh (CLI)
+# Chạy thực nghiệm đối sánh 4 cấu hình thuật toán trên dòng lệnh (tiếng Việt không dấu)
 python task2/main_task2.py --cli
+
+# Chạy bộ kiểm chứng tự động 6 nhóm bất biến (vật lý, bất biến, 4 thuật toán, bot ngoài)
+python task2/main_task2.py --verify
 ```
-- Các điều khiển trên giao diện: chọn bản đồ, chọn bộ điều khiển `MAX` / `MIN`, `Tự chạy`/`Tạm dừng`, `Từng bước`, `Đặt lại`, `-`/`+` tốc độ, và `Nạp lại Bot`.
+- Các điều khiển trên giao diện: chọn bản đồ, chọn bộ điều khiển `MAX` / `MIN`, `Nạp lại Bot nhóm ngoài`, `Tự chạy`/`Tạm dừng`, `Từng bước`, `Đặt lại` và thanh trượt tốc độ.
 - Notebook thực nghiệm (đã lưu đủ output tiếng Việt ở tất cả các cell): `task2/benchmark_task2.ipynb`.
 
-### Task 3: Câu đố Kakuro (Bộ giải CSP, Visualizer & Board Editor trên PyGame)
+### Task 3: Câu đố Kakuro (Bộ giải CSP & Giao diện PyGame tối giản)
 ```bash
-# Mở giao diện đồ họa PyGame Kakuro Visualizer & Board Editor
+# Mở giao diện đồ họa PyGame tối giản (1160x720, trực quan CSP & trình soạn thảo)
 python task3/main_task3.py
 
-# Chạy kiểm thử toàn bộ 4 bảng Kakuro với 3 chế độ giải trên dòng lệnh (CLI)
-python task3/main_task3.py --cli
+# In mô hình hóa <X, D, C>, bất biến tổng và hiệu quả tiền xử lý 2 tầng (tiếng Việt không dấu)
+python task3/main_task3.py --explain-csp
+
+# Chạy benchmark đối sánh 3 chế độ trên 4 bảng mẫu (tiếng Việt không dấu)
+python task3/main_task3.py --cli --trials 10
+
+# Chạy bộ kiểm chứng tự động 22 tiêu chí (CSP, 3 chế độ, BoardEditor và trường hợp biên)
+python task3/main_task3.py --verify
 ```
-- Các điều khiển trên giao diện: `Đổi bảng mẫu`, đổi chế độ thuật toán (`Nâng cao: AC-3 mở rộng + MRV/Bậc/LCV`, `Quay lui + Kiểm tra tiến + MRV`, `Quay lui cơ bản`), `Tự chạy`/`Tạm dừng`, `Bước trước`/`Bước tiếp`, `Đặt lại`, `Bước cuối`, thanh kéo `Tốc độ phát`, và `Sửa bảng` / `Dừng & Sửa` để mở trình soạn thảo bảng tùy chỉnh (`BoardEditor`).
+- Các điều khiển trên giao diện: chọn nhanh bảng mẫu (`5×5`, `6×6`, `8×8`, `9×9`), chọn 3 chế độ giải (`Quay lui cơ bản`, `Kiểm tra tiến + MRV`, `AC-3 mở rộng + MRV/Bậc/LCV`), `Phát`/`Tạm dừng`, `Bước tiếp`/`Trước`, `Đặt lại`, `Bước cuối`, thanh tốc độ, và `Sửa bảng` / `Dừng & Sửa bảng` mở trình soạn thảo bảng tùy chỉnh (`BoardEditor` & `Bulk Edit`).
 - Notebook thực nghiệm (đã lưu đủ output tiếng Việt ở tất cả các cell): `task3/experiments_task3.ipynb`.
 
 ---
