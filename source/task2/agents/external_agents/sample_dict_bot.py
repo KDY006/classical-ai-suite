@@ -6,7 +6,7 @@ simply inspect ``obs_dict`` and return one of the 6 valid action strings.
 
 from __future__ import annotations
 
-BOT_NAME = "Ext: BaseHunter (Dict API)"
+BOT_NAME = "Bot ngoài: Săn căn cứ (Dict)"
 
 
 def get_action(obs: dict) -> str:

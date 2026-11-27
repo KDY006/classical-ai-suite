@@ -18,9 +18,9 @@ from .propagation import (
 
 
 class SolverMode(str, Enum):
-    PLAIN_BT = "Baseline Backtracking"
-    BT_FC = "BT + Forward Checking + MRV"
-    BT_MAC_HEURISTICS = "BT + Extended AC-3 + MRV/Degree/LCV"
+    PLAIN_BT = "Quay lui cơ bản"
+    BT_FC = "Quay lui + Kiểm tra tiến + MRV"
+    BT_MAC_HEURISTICS = "Quay lui + AC-3 mở rộng + MRV/Bậc/LCV"
 
 
 @dataclass
@@ -107,7 +107,7 @@ class KakuroSolver:
         self._trace_truncated = False
         t0 = time.perf_counter()
         assignment: Dict[Tuple[int, int], int] = dict(csp.givens)
-        self._emit("INITIAL", None, None, assignment, csp.initial_domains(), {}, "Initial domains before preprocessing.")
+        self._emit("INITIAL", None, None, assignment, csp.initial_domains(), {}, "Khởi tạo miền giá trị ban đầu trước khi tiền xử lý.")
 
         givens_ok = all(run.is_consistent_partial(assignment) for run in csp.runs)
         ok = givens_ok
@@ -120,7 +120,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 {},
-                "Initialized full domains {1..9} without preprocessing.",
+                "Khởi tạo miền đầy đủ {1..9} không qua tiền xử lý.",
             )
         elif self.mode == SolverMode.BT_FC:
             domains, pre_pruned = SumPartitionCatalog.preprocess_node_domains(csp)
@@ -132,7 +132,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 pre_pruned,
-                "Sum-partition node consistency narrowed initial candidate domains.",
+                "Tiền xử lý tổ hợp tổng đã thu hẹp miền ứng viên ban đầu.",
             )
         else:
             domains, pre_pruned = SumPartitionCatalog.preprocess_node_domains(csp)
@@ -146,7 +146,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 merged_pruned,
-                "Applied Sum-Partition preprocessing + initial Extended AC-3 arc consistency.",
+                "Đã áp dụng tiền xử lý tổ hợp tổng + lan truyền cung AC-3 mở rộng.",
             )
         initial_ok = givens_ok and all(domains.values()) and ok
         if initial_ok and self.mode == SolverMode.BT_FC:
@@ -155,7 +155,7 @@ class KakuroSolver:
                 self._count_pruned(pruned)
                 if pruned:
                     self._emit("PRUNE", pos, value, assignment, domains, pruned,
-                               "Propagate constraints from given digits.")
+                               "Lan truyền ràng buộc từ các chữ số cho trước.")
                 if not initial_ok:
                     break
         solved = initial_ok and self._backtrack(csp, assignment, domains)
@@ -172,12 +172,12 @@ class KakuroSolver:
                 assignment,
                 domains,
                 {},
-                f"Solved all {len(csp.variables)} variables in {self._nodes} nodes ({self._backtracks} backtracks).",
+                f"Đã giải xong toàn bộ {len(csp.variables)} biến sau {self._nodes} nút ({self._backtracks} lần quay lui).",
             )
 
         else:
             self._emit(status, None, None, assignment, domains, {},
-                       "Node limit reached; no conclusion about satisfiability." if self._limit_hit else "No solution exists.")
+                       "Chạm giới hạn nút duyệt; chưa kết luận được tính khả thỏa." if self._limit_hit else "Bảng không có nghiệm hợp lệ.")
 
         return KakuroSolveResult(
             puzzle_name=csp.name,
@@ -211,9 +211,9 @@ class KakuroSolver:
         cand_values = self._order_domain_values(csp, pos, assignment, domains)
 
         if self.mode == SolverMode.BT_MAC_HEURISTICS:
-            msg = f"MRV+Degree selected cell {pos} with domain {sorted(domains[pos])}."
+            msg = f"MRV + Bậc chọn ô {pos} với miền ứng viên {sorted(domains[pos])}."
         else:
-            msg = f"Selected next unassigned cell {pos} with {len(domains[pos])} candidates."
+            msg = f"Chọn ô chưa gán {pos} với {len(domains[pos])} ứng viên."
         self._emit("SELECT_VAR", pos, None, assignment, domains, {}, msg)
 
         for val in cand_values:
@@ -224,7 +224,7 @@ class KakuroSolver:
             self._nodes += 1
             if not csp.is_consistent(pos, val, assignment):
                 self._emit("REJECT", pos, val, assignment, domains, {},
-                           f"Rejected X{pos} = {val}: inconsistent sum or AllDifferent.")
+                           f"Từ chối X{pos} = {val}: vi phạm tổng gợi ý hoặc trùng chữ số.")
                 continue
 
             saved_domains: DomainMap = {p: set(d) for p, d in domains.items()}
@@ -238,7 +238,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 {},
-                f"Assigned X{pos} = {val}.",
+                f"Thử gán X{pos} = {val}.",
             )
 
             if self.mode == SolverMode.PLAIN_BT:
@@ -260,12 +260,12 @@ class KakuroSolver:
                     assignment,
                     domains,
                     pruned_rec,
-                    f"Constraint propagation from X{pos}={val} pruned {sum(len(v) for v in pruned_rec.values())} candidate(s)."
-                    + ("" if prop_ok else " -> Constraint inconsistency detected!"),
+                    f"Lan truyền ràng buộc từ X{pos}={val} đã loại {sum(len(v) for v in pruned_rec.values())} ứng viên."
+                    + ("" if prop_ok else " -> Phát hiện mâu thuẫn miền!"),
                 )
 
             if not prop_ok:
-                self._emit("FAILURE", pos, val, assignment, domains, {}, "Dead end: constraint has no support or a domain is empty.")
+                self._emit("FAILURE", pos, val, assignment, domains, {}, "Ngõ cụt: một miền giá trị bị rỗng hoặc không còn tổ hợp hỗ trợ.")
             if prop_ok and self._backtrack(csp, assignment, domains):
                 return True
 
@@ -281,7 +281,7 @@ class KakuroSolver:
                 assignment,
                 domains,
                 {},
-                f"Backtracked on X{pos} = {val}; restored domains.",
+                f"Quay lui tại X{pos} = {val}; khôi phục các miền giá trị.",
             )
 
             if self._limit_hit:
@@ -372,7 +372,7 @@ class KakuroSolver:
             self._trace_truncated = True
             return
         if terminal and self._trace_truncated:
-            message = "Trace limit: intermediate events omitted. " + message
+            message = "Đã chạm giới hạn lưu vết trung gian. " + message
         self._steps.append(
             SolverStep(
                 step_type=step_type,

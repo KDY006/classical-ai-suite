@@ -1,4 +1,4 @@
-"""Main entry point for Task 3: Kakuro CSP Solver Benchmark & PyGame Visualizer UI."""
+"""Điểm khởi chạy chính cho Nhiệm vụ 3: Bộ giải Kakuro CSP & Giao diện Trực quan hóa PyGame."""
 
 from __future__ import annotations
 
@@ -23,34 +23,35 @@ def run_cli_evaluation() -> None:
         "board_9x9_complex.json",
     ]
 
-    print("=" * 98)
-    print("TASK 3.2: KAKURO CSP SOLVER EVALUATION")
-    print("=" * 98)
+    print("=" * 106)
+    print("NHIỆM VỤ 3.2: ĐÁNH GIÁ BỘ GIẢI KAKURO CSP TRÊN CÁC BẢNG CÂU ĐỐ VÀ CẤU HÌNH LAN TRUYỀN")
+    print("=" * 106)
     print(
-        f"{'Kakuro Board':<36} | {'Algorithm':<34} | {'Vars':>4} | "
-        f"{'Nodes':>6} | {'Backtracks':>10} | {'Time (ms)':>9} | {'Valid':>5}"
+        f"{'Bảng câu đố Kakuro':<36} | {'Chế độ giải':<38} | {'Biến':>4} | "
+        f"{'Số nút':>6} | {'Quay lui':>8} | {'Thời gian':>10} | {'Hợp lệ':>6}"
     )
-    print("-" * 98)
+    print("-" * 106)
 
     for fname in map_files:
         csp = KakuroCSP.from_json(maps_dir / fname)
         for mode in (SolverMode.PLAIN_BT, SolverMode.BT_FC, SolverMode.BT_MAC_HEURISTICS):
             res = KakuroSolver(mode=mode).solve(csp)
+            valid_vi = "Đúng" if res.valid_verified else "Sai"
             print(
-                f"{csp.name[:36]:<36} | {mode.value:<34} | {len(csp.variables):>4} | "
-                f"{res.nodes_explored:>6} | {res.backtracks:>10} | {res.elapsed_ms:>9.2f} | {str(res.valid_verified):>5}"
+                f"{csp.name[:36]:<36} | {mode.value:<38} | {len(csp.variables):>4} | "
+                f"{res.nodes_explored:>6} | {res.backtracks:>8} | {res.elapsed_ms:>7.2f} ms | {valid_vi:>6}"
             )
-        print("-" * 98)
+        print("-" * 106)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Task 3: Kakuro CSP solver and board editor")
-    parser.add_argument("--cli", action="store_true", help="Run benchmark on preset boards")
+    parser = argparse.ArgumentParser(description="Nhiệm vụ 3: Bộ giải Kakuro CSP và Trình soạn thảo bảng")
+    parser.add_argument("--cli", action="store_true", help="Chạy thực nghiệm đối sánh trên các bảng mẫu")
     parser.add_argument(
         "--headless-screenshot",
         type=str,
         default=None,
-        help="Save a PNG screenshot of the 9x9 board",
+        help="Xuất ảnh chụp giao diện PNG trên bảng phức tạp 9x9",
     )
     args = parser.parse_args()
 
@@ -64,18 +65,16 @@ def main() -> None:
         from task3.visualizer_ui import KakuroVisualizerUI
 
         ui = KakuroVisualizerUI()
-        # Switch to 9x9 Complex Board (index 1) and Forward Checking (mode 1) to show active pruning & domains
         ui.map_idx = 1
         ui.mode_idx = 1
         ui._reload_problem()
-        # Advance to a PRUNE step for clear visual demonstration
         for idx, st in enumerate(ui.result.steps_trace):
             if st.step_type == "PRUNE" and idx >= 12:
                 ui.step_idx = idx
                 break
         ui.save_screenshot(Path(args.headless_screenshot))
         pygame.quit()
-        print(f"Screenshot saved to {args.headless_screenshot}")
+        print(f"Đã lưu ảnh chụp giao diện Kakuro tại: {args.headless_screenshot}")
         return
 
     from task3.visualizer_ui import KakuroVisualizerUI

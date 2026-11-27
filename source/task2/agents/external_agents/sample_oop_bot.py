@@ -14,7 +14,7 @@ class ExternalGreedyStrikerBot(BaseTankAgent):
     """Sample 1-ply greedy lookahead bot illustrating OOP external integration."""
 
     def __init__(self) -> None:
-        super().__init__(name="Ext: GreedyStriker (OOP)")
+        super().__init__(name="Bot ngoài: Xung kích (OOP)")
 
     def choose_action(self, state: GameState) -> str:
         t0 = time.perf_counter()

@@ -1,6 +1,6 @@
 {
-  "name": "Example Board (5x5 - Spec Page 4)",
-  "description": "Official 5x5 Kakuro example puzzle from Task 3 specification (12 white cells, sum=60).",
+  "name": "Bảng mẫu 5x5 (Đề bài trang 4)",
+  "description": "Bảng Kakuro ví dụ 5x5 chính thức từ đề bài (12 ô trắng, tổng = 60).",
   "grid": [
     [
       "B",

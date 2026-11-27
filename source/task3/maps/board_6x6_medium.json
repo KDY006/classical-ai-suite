@@ -1,6 +1,6 @@
 {
-  "name": "Medium Benchmark Board (6x6)",
-  "description": "6x6 Kakuro stability test board (19 white cells).",
+  "name": "Bảng trung bình 6x6",
+  "description": "Bảng Kakuro 6x6 kiểm thử độ ổn định (19 ô trắng).",
   "grid": [
     [
       "B",

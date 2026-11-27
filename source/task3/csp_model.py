@@ -104,17 +104,17 @@ class KakuroCSP:
         givens: Optional[Dict[Tuple[int, int], int]] = None,
     ) -> None:
         if not isinstance(raw_grid, list) or not raw_grid or not isinstance(raw_grid[0], list) or not raw_grid[0]:
-            raise ValueError("The board must be a non-empty rectangular grid.")
+            raise ValueError("Bảng phải là một lưới chữ nhật khác rỗng.")
         for row in raw_grid:
             if not isinstance(row, list) or len(row) != len(raw_grid[0]):
-                raise ValueError("All rows must have the same length.")
+                raise ValueError("Tất cả các hàng trong bảng phải có cùng độ dài.")
             for cell in row:
                 if cell in ("W", "B"):
                     continue
                 if not isinstance(cell, dict) or not cell or not set(cell) <= {"across", "down"}:
-                    raise ValueError(f"Invalid cell: {cell!r}")
+                    raise ValueError(f"Ô dữ liệu không hợp lệ: {cell!r}")
                 if any(type(v) is not int or not 1 <= v <= 45 for v in cell.values()):
-                    raise ValueError(f"Invalid clue sum: {cell!r}")
+                    raise ValueError(f"Tổng gợi ý không hợp lệ (cần từ 1 đến 45): {cell!r}")
         self.name: str = name
         self.description: str = description
         self.raw_grid: List[List[CellSpec]] = deepcopy(raw_grid)
@@ -130,7 +130,7 @@ class KakuroCSP:
         self.givens = dict(givens or {})
         for pos, value in self.givens.items():
             if pos not in self.variables or type(value) is not int or not 1 <= value <= 9:
-                raise ValueError(f"Invalid given digit at {pos}: {value!r}")
+                raise ValueError(f"Chữ số cho trước không hợp lệ tại {pos}: {value!r}")
 
     @classmethod
     def from_json(cls, path: Path) -> "KakuroCSP":
@@ -141,14 +141,14 @@ class KakuroCSP:
     @classmethod
     def from_dict(cls, data, default_name="Kakuro") -> "KakuroCSP":
         if not isinstance(data, dict) or "grid" not in data or not isinstance(data.get("givens", []), list):
-            raise ValueError("JSON must contain a grid and a valid givens list.")
+            raise ValueError("File JSON phải chứa lưới 'grid' và danh sách 'givens' hợp lệ.")
         givens = {}
         for item in data.get("givens", []):
             if not isinstance(item, dict) or not {"row", "col", "value"} <= set(item):
-                raise ValueError("Each given requires row, col and value.")
+                raise ValueError("Mỗi chữ số cho trước cần có đủ row, col và value.")
             r, c, value = item["row"], item["col"], item["value"]
             if type(r) is not int or type(c) is not int or (r, c) in givens:
-                raise ValueError("Invalid or duplicate given coordinates.")
+                raise ValueError("Tọa độ chữ số cho trước bị trùng hoặc không hợp lệ.")
             givens[(r, c)] = value
         return cls(
             name=data.get("name", default_name),
@@ -183,7 +183,7 @@ class KakuroCSP:
                         run_vars.append(self.variables[(r, cc)])
                         cc += 1
                     if not run_vars:
-                        raise ValueError(f"Across clue at ({r+1}, {c+1}) has no white cells.")
+                        raise ValueError(f"Gợi ý ngang tại ({r+1}, {c+1}) không có ô trắng nào.")
                     rc = RunConstraint(run_counter, "ACROSS", (r, c), target, run_vars)
                     run_counter += 1
                     self.runs.append(rc)
@@ -198,7 +198,7 @@ class KakuroCSP:
                         run_vars.append(self.variables[(rr, c)])
                         rr += 1
                     if not run_vars:
-                        raise ValueError(f"Down clue at ({r+1}, {c+1}) has no white cells.")
+                        raise ValueError(f"Gợi ý dọc tại ({r+1}, {c+1}) không có ô trắng nào.")
                     rc = RunConstraint(run_counter, "DOWN", (r, c), target, run_vars)
                     run_counter += 1
                     self.runs.append(rc)
@@ -206,13 +206,13 @@ class KakuroCSP:
                         v.down_run = rc
 
         if not self.variables:
-            raise ValueError("The board has no white cells.")
+            raise ValueError("Bảng không có ô trắng nào để giải.")
         for run in self.runs:
             if not 1 <= run.length <= 9:
-                raise ValueError(f"Invalid run length at {run.clue_pos}.")
+                raise ValueError(f"Độ dài dãy ô trắng tại {run.clue_pos} vượt quá giới hạn 1..9.")
         for pos, var in self.variables.items():
             if var.across_run is None or var.down_run is None:
-                raise ValueError(f"White cell {pos} requires both across and down clues.")
+                raise ValueError(f"Ô trắng {pos} bắt buộc phải thuộc cả dãy ngang và dãy dọc.")
             self.peers[pos] = var.peer_positions()
 
     def initial_domains(self) -> Dict[Tuple[int, int], Set[int]]:

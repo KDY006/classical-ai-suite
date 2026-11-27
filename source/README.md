@@ -38,8 +38,8 @@ python task2/main_task2.py
 # Chạy thực nghiệm đối sánh 4 cấu hình thuật toán trên dòng lệnh (CLI)
 python task2/main_task2.py --cli
 ```
-- Các điều khiển trên giao diện: chọn bản đồ, chọn bộ điều khiển `MAX` / `MIN`, `Play`/`Pause`, `Step`, `Reset`, `-`/`+` tốc độ, và `Reload bots`.
-- Notebook thực nghiệm (đã lưu đủ output tất cả các cell): `task2/benchmark_task2.ipynb`.
+- Các điều khiển trên giao diện: chọn bản đồ, chọn bộ điều khiển `MAX` / `MIN`, `Tự chạy`/`Tạm dừng`, `Từng bước`, `Đặt lại`, `-`/`+` tốc độ, và `Nạp lại Bot`.
+- Notebook thực nghiệm (đã lưu đủ output tiếng Việt ở tất cả các cell): `task2/benchmark_task2.ipynb`.
 
 ### Task 3: Câu đố Kakuro (Bộ giải CSP, Visualizer & Board Editor trên PyGame)
 ```bash
@@ -49,13 +49,13 @@ python task3/main_task3.py
 # Chạy kiểm thử toàn bộ 4 bảng Kakuro với 3 chế độ giải trên dòng lệnh (CLI)
 python task3/main_task3.py --cli
 ```
-- Các điều khiển trên giao diện: `Switch Preset`, đổi chế độ thuật toán (`Advanced: AC-3 + MRV/Degree/LCV`, `Backtracking + FC + MRV`, `Basic Backtracking`), `Auto Play`/`Pause`, `Previous Step`/`Next Step`, `Reset`, `Final State`, thanh kéo `Speed`, và `Edit Board` / `Stop & Edit` để mở trình soạn thảo bảng tùy chỉnh (`BoardEditor`).
-- Notebook thực nghiệm (đã lưu đủ output tất cả các cell): `task3/experiments_task3.ipynb`.
+- Các điều khiển trên giao diện: `Đổi bảng mẫu`, đổi chế độ thuật toán (`Nâng cao: AC-3 mở rộng + MRV/Bậc/LCV`, `Quay lui + Kiểm tra tiến + MRV`, `Quay lui cơ bản`), `Tự chạy`/`Tạm dừng`, `Bước trước`/`Bước tiếp`, `Đặt lại`, `Bước cuối`, thanh kéo `Tốc độ phát`, và `Sửa bảng` / `Dừng & Sửa` để mở trình soạn thảo bảng tùy chỉnh (`BoardEditor`).
+- Notebook thực nghiệm (đã lưu đủ output tiếng Việt ở tất cả các cell): `task3/experiments_task3.ipynb`.
 
 ---
 
 ## 3. Hướng Dẫn Tích Hợp Bot Nhóm Khác Vào Task 2 (`external_agents/`)
 
-Đặt file `.py` chứa thuật toán của nhóm khác vào `task2/agents/external_agents/`, sau đó nhấn nút **`Reload bots`** trên giao diện PyGame của Task 2:
+Đặt file `.py` chứa thuật toán của nhóm khác vào `task2/agents/external_agents/`, sau đó nhấn nút **`Nạp lại Bot`** trên giao diện PyGame của Task 2:
 1. **Chuẩn OOP**: Kế thừa `task2.agents.base_agent.BaseTankAgent` và cài đặt `choose_action(self, state) -> str` (xem mẫu `sample_oop_bot.py`).
 2. **Chuẩn Dictionary Adapter**: Khai báo `BOT_NAME` và hàm `def get_action(obs: dict) -> str` trả về 1 trong 6 hành động hợp lệ `"MOVE_UP"`, `"MOVE_DOWN"`, `"MOVE_LEFT"`, `"MOVE_RIGHT"`, `"FIRE"`, `"STAY"` (xem mẫu `sample_dict_bot.py`).

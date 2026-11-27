@@ -50,8 +50,18 @@ class HumanController:
     """Sentinel controller for a player operated from the keyboard."""
 
     def __init__(self) -> None:
-        self.name = "Human"
+        self.name = "Người chơi (Bàn phím)"
         self.last_metrics = SearchMetrics()
+
+
+ACTION_LABELS_VI = {
+    MOVE_UP: "LÊN",
+    MOVE_DOWN: "XUỐNG",
+    MOVE_LEFT: "TRÁI",
+    MOVE_RIGHT: "PHẢI",
+    FIRE: "BẮN",
+    STAY: "CHỜ",
+}
 
 
 class TankBattleArenaUI:
@@ -94,7 +104,7 @@ class TankBattleArenaUI:
 
     def __init__(self) -> None:
         pygame.init()
-        pygame.display.set_caption("Tank Battle | Adversarial Search Arena")
+        pygame.display.set_caption("Đấu Tăng Đối Kháng | Nhiệm vụ 2 - Tìm kiếm Đối kháng")
         window_size = self._initial_window_size()
         self.screen = pygame.display.set_mode(
             window_size,
@@ -102,16 +112,27 @@ class TankBattleArenaUI:
         )
         self.clock = pygame.time.Clock()
 
-        ui_font = (
-            "Helvetica"
-            if sys.platform == "darwin"
-            else ("Segoe UI" if sys.platform == "win32" else "DejaVu Sans")
+        font_path = next(
+            (
+                p
+                for name in ("Segoe UI", "Arial", "Tahoma", "Helvetica Neue", "Noto Sans", "DejaVu Sans")
+                if (p := pygame.font.match_font(name))
+            ),
+            None,
         )
-        self.font_title = pygame.font.SysFont(ui_font, 22, bold=True)
-        self.font_heading = pygame.font.SysFont(ui_font, 15, bold=True)
-        self.font_ui = pygame.font.SysFont(ui_font, 14)
-        self.font_small = pygame.font.SysFont(ui_font, 12)
-        self.font_mono = pygame.font.SysFont("Consolas", 12)
+        bold_path = next(
+            (
+                p
+                for name in ("Segoe UI", "Arial", "Tahoma", "Helvetica Neue", "Noto Sans", "DejaVu Sans")
+                if (p := pygame.font.match_font(name, bold=True))
+            ),
+            font_path,
+        )
+        self.font_title = pygame.font.Font(bold_path, 21)
+        self.font_heading = pygame.font.Font(bold_path, 15)
+        self.font_ui = pygame.font.Font(font_path, 14)
+        self.font_small = pygame.font.Font(font_path, 12)
+        self.font_mono = pygame.font.Font(font_path, 12)
 
         self.asset_dir = Path(__file__).resolve().parent / "assets"
         self.sprites: Dict[str, Optional[pygame.Surface]] = {}
@@ -182,10 +203,10 @@ class TankBattleArenaUI:
 
     def _build_controllers(self) -> List[object]:
         controllers: List[object] = [
-            HeuristicAlphaBetaAgent(max_depth=4, name="Heuristic Alpha-Beta (d=4)"),
-            HeuristicMinimaxAgent(max_depth=3, name="Heuristic Minimax (d=3)"),
-            AlphaBetaAgent(max_ply_cap=6, name="Pure Alpha-Beta (cap=6)"),
-            MinimaxAgent(max_ply_cap=5, name="Pure Minimax (cap=5)"),
+            HeuristicAlphaBetaAgent(max_depth=4, name="Heuristic Alpha-Beta (sâu 4)"),
+            HeuristicMinimaxAgent(max_depth=3, name="Heuristic Minimax (sâu 3)"),
+            AlphaBetaAgent(max_ply_cap=6, name="Alpha-Beta thuần (cắt 6)"),
+            MinimaxAgent(max_ply_cap=5, name="Minimax thuần (cắt 5)"),
             HumanController(),
         ]
         controllers.extend(discover_external_agents())
@@ -227,8 +248,9 @@ class TankBattleArenaUI:
 
         metrics = getattr(controller, "last_metrics", SearchMetrics())
         side = "MAX" if player_id == PLAYER_MAX else "MIN"
+        act_vi = ACTION_LABELS_VI.get(action, action)
         self.action_log.append(
-            f"{side}  {action}   {metrics.explored_states:,} nodes   {metrics.elapsed_ms:.1f} ms"
+            f"{side}  {act_vi}   {metrics.explored_states:,} nút   {metrics.elapsed_ms:.1f} ms"
         )
         self.action_log = self.action_log[-4:]
 
@@ -322,10 +344,10 @@ class TankBattleArenaUI:
         pygame.draw.rect(self.screen, self.BORDER, area, width=1, border_radius=18)
 
         title_y = area.y + 16
-        self._draw_text("TANK BATTLE", self.font_title, self.TEXT, (area.x + 22, title_y))
+        self._draw_text("ĐẤU TĂNG ĐỐI KHÁNG", self.font_title, self.TEXT, (area.x + 22, title_y))
         scenario = self.scenarios[self.scenario_idx]
         self._draw_text(
-            f"{scenario.title}  |  Turn {self.state.ply}/{self.state.max_plies}",
+            f"{scenario.title}  |  Lượt {self.state.ply}/{self.state.max_plies}",
             self.font_ui,
             self.MUTED,
             (area.x + 24, title_y + 32),
@@ -412,7 +434,7 @@ class TankBattleArenaUI:
                 else:
                     self.screen.blit(sprite, sprite_rect)
                     pygame.draw.rect(self.screen, color, sprite_rect, width=2, border_radius=5)
-                self._draw_badge(f"B{player_id}", rect.centerx, rect.bottom - 4, color)
+                self._draw_badge(f"CC{player_id}", rect.centerx, rect.bottom - 4, color)
             else:
                 pygame.draw.line(self.screen, self.RED, rect.topleft, rect.bottomright, 4)
                 pygame.draw.line(self.screen, self.RED, rect.topright, rect.bottomleft, 4)
@@ -484,9 +506,9 @@ class TankBattleArenaUI:
         pygame.draw.rect(self.screen, (18, 23, 31), banner, border_radius=12)
         pygame.draw.rect(self.screen, self.GOLD, banner, width=2, border_radius=12)
         if winner == 0:
-            message = "MATCH DRAW"
+            message = "KẾT QUẢ: HÒA TRẬN"
         else:
-            message = f"{'MAX' if winner == PLAYER_MAX else 'MIN'} WINS"
+            message = f"{'PHE MAX' if winner == PLAYER_MAX else 'PHE MIN'} CHIẾN THẮNG!"
         self._draw_text(
             message,
             self.font_title,
@@ -507,16 +529,16 @@ class TankBattleArenaUI:
         x = panel.x + 18
         width = panel.width - 36
         y = panel.y + 16
-        self._draw_text("MATCH CONTROL", self.font_heading, self.TEXT, (x, y))
+        self._draw_text("ĐIỀU KHIỂN TRẬN ĐẤU", self.font_heading, self.TEXT, (x, y))
         self._draw_text(
-            "Choose a map and one controller per side",
+            "Chọn bản đồ và bộ điều khiển cho mỗi phe",
             self.font_small,
             self.MUTED,
             (x, y + 22),
         )
 
         y += int(52 * scale)
-        self._draw_text("MAP", self.font_small, self.MUTED, (x, y))
+        self._draw_text("BẢN ĐỒ KỊCH BẢN", self.font_small, self.MUTED, (x, y))
         self._add_button(
             pygame.Rect(x, y + 16, width, max(29, int(34 * scale))),
             self.scenarios[self.scenario_idx].title,
@@ -543,24 +565,24 @@ class TankBattleArenaUI:
         button_width = (width - button_gap * 2) // 3
         self._add_button(
             pygame.Rect(x, y, button_width, max(29, int(32 * scale))),
-            "Pause" if self.auto_play else "Play",
+            "Tạm dừng" if self.auto_play else "Tự chạy",
             "TOGGLE_PLAY",
             highlighted=self.auto_play,
         )
         self._add_button(
             pygame.Rect(x + button_width + button_gap, y, button_width, max(29, int(32 * scale))),
-            "Step",
+            "Từng bước",
             "STEP_ONCE",
         )
         self._add_button(
             pygame.Rect(x + (button_width + button_gap) * 2, y, button_width, max(29, int(32 * scale))),
-            "Reset",
+            "Đặt lại",
             "RESET",
         )
 
         y += int(39 * scale)
-        self._draw_text(f"{self.step_delay_ms} ms / turn", self.font_small, self.MUTED, (x, y + 3))
-        reload_width = 88
+        self._draw_text(f"{self.step_delay_ms} ms / lượt", self.font_small, self.MUTED, (x, y + 3))
+        reload_width = 96
         speed_x = panel.right - 18 - reload_width - 8 - 86
         self._add_button(pygame.Rect(speed_x, y, 39, 25), "-", "SLOWER")
         self._add_button(
@@ -570,12 +592,12 @@ class TankBattleArenaUI:
         )
         self._add_button(
             pygame.Rect(panel.right - 18 - reload_width, y, reload_width, 25),
-            "Reload bots",
+            "Nạp lại Bot",
             "RELOAD_EXT",
         )
 
         y += int(33 * scale)
-        self._draw_text("UNIT STATUS", self.font_small, self.MUTED, (x, y))
+        self._draw_text("TRẠNG THÁI ĐƠN VỊ", self.font_small, self.MUTED, (x, y))
         y += 16
         for player_id, color, label in (
             (PLAYER_MAX, self.BLUE, "MAX"),
@@ -583,16 +605,16 @@ class TankBattleArenaUI:
         ):
             tank = self.state.tanks[player_id]
             base = self.state.bases[player_id]
-            self._draw_text(f"{label} T", self.font_small, color, (x, y))
-            self._draw_hp_bar(pygame.Rect(x + 49, y + 2, max(24, int(width * 0.50)), 8), tank.hp, TANK_INITIAL_HP, color)
+            self._draw_text(f"Xe {label}", self.font_small, color, (x, y))
+            self._draw_hp_bar(pygame.Rect(x + 56, y + 2, max(24, int(width * 0.48)), 8), tank.hp, TANK_INITIAL_HP, color)
             self._draw_text(f"{tank.hp}/{TANK_INITIAL_HP}", self.font_small, self.TEXT, (x + int(width * 0.72), y - 1))
-            self._draw_text("Base", self.font_small, self.MUTED, (x, y + 17))
-            self._draw_hp_bar(pygame.Rect(x + 49, y + 19, max(24, int(width * 0.50)), 8), base.hp, BASE_INITIAL_HP, color)
+            self._draw_text("Căn cứ", self.font_small, self.MUTED, (x, y + 17))
+            self._draw_hp_bar(pygame.Rect(x + 56, y + 19, max(24, int(width * 0.48)), 8), base.hp, BASE_INITIAL_HP, color)
             self._draw_text(f"{base.hp}/{BASE_INITIAL_HP}", self.font_small, self.TEXT, (x + int(width * 0.72), y + 16))
             y += int(39 * scale)
 
         y += 1
-        self._draw_text("SEARCH TELEMETRY", self.font_small, self.MUTED, (x, y))
+        self._draw_text("THÔNG SỐ TÌM KIẾM", self.font_small, self.MUTED, (x, y))
         y += 16
         for player_id, color, label in (
             (PLAYER_MAX, self.BLUE, "MAX"),
@@ -611,15 +633,16 @@ class TankBattleArenaUI:
                 (card.x + 9, card.y + 5),
                 max_width=card.width - 20,
             )
+            act_vi = ACTION_LABELS_VI.get(metrics.chosen_action, metrics.chosen_action)
             self._draw_text(
-                f"{metrics.chosen_action} | d{metrics.depth_reached} | {metrics.elapsed_ms:.1f} ms",
+                f"{act_vi} | sâu {metrics.depth_reached} | {metrics.elapsed_ms:.1f} ms",
                 self.font_mono,
                 self.TEXT,
                 (card.x + 9, card.y + 22),
                 max_width=card.width - 20,
             )
             self._draw_text(
-                f"{metrics.explored_states:,} nodes | {metrics.pruned_branches} cut | TT {metrics.tt_hits}",
+                f"{metrics.explored_states:,} nút | cắt {metrics.pruned_branches} | TT {metrics.tt_hits}",
                 self.font_mono,
                 self.MUTED,
                 (card.x + 9, card.y + 37),
@@ -628,7 +651,7 @@ class TankBattleArenaUI:
             y += max(card_height + 4, int(59 * scale))
 
         if panel.height >= 700 and y + 68 < panel.bottom - 8:
-            self._draw_text("RECENT ACTIONS", self.font_small, self.MUTED, (x, y))
+            self._draw_text("NHẬT KÝ LƯỢT ĐI", self.font_small, self.MUTED, (x, y))
             y += 18
             for message in self.action_log[-3:]:
                 self._draw_text(
@@ -646,7 +669,7 @@ class TankBattleArenaUI:
             HumanController,
         )
         self._draw_text(
-            "WASD/arrows | Space fire" if is_human_turn else "ESC to quit",
+            "WASD/Mũi tên: Đi | Space: Bắn | Enter: Chờ" if is_human_turn else "Nhấn ESC để thoát",
             self.font_small,
             self.GOLD if is_human_turn else self.MUTED,
             (x, hint_y),
@@ -796,10 +819,11 @@ class TankBattleArenaUI:
     def _display_controller_name(cls, controller: object) -> str:
         name = cls._controller_name(controller)
         aliases = {
-            "Heuristic Alpha-Beta (d=4)": "Heuristic AB d4",
-            "Heuristic Minimax (d=3)": "Heuristic Minimax d3",
-            "Pure Alpha-Beta (cap=6)": "Alpha-Beta cap6",
-            "Pure Minimax (cap=5)": "Minimax cap5",
+            "Heuristic Alpha-Beta (sâu 4)": "Heuristic AB (s4)",
+            "Heuristic Minimax (sâu 3)": "Heuristic MM (s3)",
+            "Alpha-Beta thuần (cắt 6)": "Alpha-Beta (c6)",
+            "Minimax thuần (cắt 5)": "Minimax (c5)",
+            "Người chơi (Bàn phím)": "Người chơi",
         }
         return aliases.get(name, name)
 

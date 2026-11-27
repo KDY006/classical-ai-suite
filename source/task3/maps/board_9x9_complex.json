@@ -1,6 +1,6 @@
 {
-  "name": "Complex Test Board (9x9 - Spec Page 5)",
-  "description": "Official 9x9 complex Kakuro test case from Requirement 3.2 (48 white cells, sum=249).",
+  "name": "Bảng phức tạp 9x9 (Đề bài trang 5)",
+  "description": "Bảng Kakuro phức tạp 9x9 chính thức từ Yêu cầu 3.2 (48 ô trắng, tổng = 249).",
   "grid": [
     [
       "B",

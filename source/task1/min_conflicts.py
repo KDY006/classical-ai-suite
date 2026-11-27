@@ -42,7 +42,7 @@ class VariableSelectionStrategy(ABC):
 class RandomConflictedSelector(VariableSelectionStrategy):
     @property
     def name(self):
-        return "Standard Min-Conflicts (Random Variable)"
+        return "Min-Conflicts tiêu chuẩn (Ngẫu nhiên)"
 
     def select_column(self, board, conflicted_cols, step, rng, total_conflicts):
         return rng.choice(conflicted_cols)
@@ -57,7 +57,7 @@ class TabuMaxConflictSelector(VariableSelectionStrategy):
 
     @property
     def name(self):
-        return "Proposed Heuristic (Max-Conflict + Tabu)"
+        return "Heuristic đề xuất (Max-Conflict + Tabu)"
 
     def reset(self, n):
         self.tenure = max(2, min(8, round(n * self.tenure_ratio)))

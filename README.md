@@ -136,10 +136,10 @@ python source/task1/main_task1.py --sat-sizes 4 8 16 32 50 --mc-sizes 8 16 32 64
 ```bash
 python source/task2/main_task2.py
 ```
-**Hướng dẫn sử dụng bảng điều khiển trên cửa sổ PyGame Arena:**
-- **Nút bản đồ (`Classic Battle City (9x9)`, ...)**: Nhấn để chuyển đổi giữa 6 kịch bản bản đồ Tầng 1 (Endgame `7x7`) và Tầng 2 (Full Arena `9x9`, `11x11`).
-- **Nút `MAX: ...` (Xe Xanh)** và **`MIN: ...` (Xe Đỏ)**: Nhấn để chọn bộ điều khiển cho từng bên: `Heuristic Alpha-Beta (d=4)`, `Heuristic Minimax (d=3)`, `Pure Alpha-Beta (cap=6)`, `Pure Minimax (cap=5)`, `Human` (bàn phím `WASD`/mũi tên + `Space` bắn + `Enter` đứng yên), hoặc các bot nhóm ngoài trong `external_agents/`.
-- **Các nút điều khiển trận đấu**: `Play` / `Pause` (chạy tự động), `Step` (chạy từng lượt), `Reset` (khởi động lại ván), `-` / `+` (chỉnh tốc độ), `Reload bots` (quét nạp nóng bot mới trong `external_agents/`).
+**Hướng dẫn sử dụng bảng điều khiển tiếng Việt trên cửa sổ PyGame Arena:**
+- **Nút `BẢN ĐỒ KỊCH BẢN` (`Đấu trường Cổ điển (9x9)`, ...)**: Nhấn để chuyển đổi giữa 6 kịch bản bản đồ Tầng 1 (*Tàn cuộc Đối đầu*, *Tàn cuộc Đua phá căn cứ*, *Tàn cuộc Phục kích góc* `7x7`) và Tầng 2 (*Đấu trường Cổ điển 9x9*, *Giao lộ Hỏa lực 9x9*, *Công thành Pháo đài 11x11*).
+- **Nút `MAX: ...` (Xe Xanh)** và **`MIN: ...` (Xe Đỏ)**: Nhấn để chọn bộ điều khiển cho từng phe: `Heuristic Alpha-Beta (sâu 4)`, `Heuristic Minimax (sâu 3)`, `Alpha-Beta thuần (cắt 6)`, `Minimax thuần (cắt 5)`, `Người chơi (Bàn phím)` (`WASD`/mũi tên di chuyển + `Space` bắn + `Enter` chờ), hoặc các bot nhóm ngoài trong `external_agents/`.
+- **Các nút điều khiển trận đấu**: `Tự chạy` / `Tạm dừng`, `Từng bước` (chạy từng lượt một), `Đặt lại` (khởi động lại ván), `-` / `+` (chỉnh tốc độ ms/lượt), và `Nạp lại Bot` (quét nạp nóng bot mới trong `external_agents/`).
 
 #### B. Chạy Benchmark đối sánh 4 thuật toán trên Terminal (CLI)
 ```bash
@@ -147,7 +147,7 @@ python source/task2/main_task2.py --cli
 ```
 
 #### C. Tích hợp thuật toán của nhóm sinh viên khác vào thi đấu (Yêu cầu 2.3)
-Chép file `.py` của nhóm khác vào `source/task2/agents/external_agents/` và bấm **`Reload bots`**. Hỗ trợ tự động 2 chuẩn:
+Chép file `.py` của nhóm khác vào `source/task2/agents/external_agents/` và bấm **`Nạp lại Bot`**. Hỗ trợ tự động 2 chuẩn:
 1. **Kế thừa lớp `BaseTankAgent`**: Override `choose_action(self, state: GameState) -> str` (xem mẫu `sample_oop_bot.py`).
 2. **Hàm độc lập `get_action(obs: dict) -> str`**: Nhận `dict` trạng thái độc lập và trả về 1 trong 6 hành động `"MOVE_UP"`, `"MOVE_DOWN"`, `"MOVE_LEFT"`, `"MOVE_RIGHT"`, `"FIRE"`, `"STAY"` (xem mẫu `sample_dict_bot.py`).
 
@@ -166,10 +166,10 @@ python source/task3/main_task3.py
   - **Nền Đỏ Nhạt + Số Đỏ gạch ngang**: Ứng viên bị loại bởi **Constraint Propagation** (`PRUNE`); chữ `x` báo miền rỗng.
   - **Nền Cam**: Từ chối giá trị, ngõ cụt hoặc bước **Backtrack** khôi phục miền.
   - **Chữ Tím (`G`)**: Chữ số cho trước (`given digit`); **Nền Xanh Lá**: Đã tìm được nghiệm hợp lệ (`SOLVED`).
-- **Nút điều khiển ở `Solver Mode`**:
-  - `Switch Preset` (đổi bảng `5x5`, `9x9`, `6x6`, `8x8`), nút chọn chế độ giải (`Advanced: AC-3 + MRV/Degree/LCV`, `Backtracking + FC + MRV`, `Basic Backtracking`), `Auto Play` / `Pause` (`Space`), `Previous Step` / `Next Step` (mũi tên `Trái`/`Phải`), `Reset` (`0`), `Final State`, thanh kéo `Speed`, `Solve Again`, và `Edit Board` / `Stop & Edit` (`Esc` – dừng luồng giải nền để chỉnh sửa bảng).
-- **Chế độ `Board Editor`**:
-  - Cho phép tạo bảng mới `3x3`–`9x9`, đổi loại ô Trắng/Đen, sửa tổng ngang/dọc, nhập số cho trước (`given`), sửa hàng loạt `Bulk Edit All Cells`, sinh ngẫu nhiên bộ tổng có nghiệm `Randomize All Clues`, kiểm tra hợp lệ và lưu/mở file JSON trong `maps/custom/`.
+- **Nút điều khiển ở `Chế độ Giải`**:
+  - `Đổi bảng mẫu` (luân phiên `5x5`, `9x9`, `6x6`, `8x8`), nút chọn chế độ giải (`Nâng cao: AC-3 mở rộng + MRV/Bậc/LCV`, `Quay lui + Kiểm tra tiến + MRV`, `Quay lui cơ bản`), `Tự chạy` / `Tạm dừng` (`Space`), `Bước trước` / `Bước tiếp` (mũi tên `Trái`/`Phải`), `Đặt lại` (`0`), `Bước cuối`, thanh kéo `Tốc độ phát`, `Giải lại`, và `Sửa bảng` / `Dừng & Sửa` (`Esc` – dừng luồng giải nền để chuyển sang soạn thảo bảng).
+- **Nút điều khiển ở `Chế độ Soạn thảo`**:
+  - Cho phép `Tạo bảng` mới `3x3`–`9x9`, `Đổi thành Ô trắng` / `Đổi thành Ô đen`, sửa `Tổng ngang` / `Tổng dọc`, nhập `Số cho trước`, `Sửa nhanh toàn bảng`, `Sinh ngẫu nhiên gợi ý` đảm bảo có nghiệm, `Kiểm tra hợp lệ`, `Lưu JSON` / `Mở JSON` trong `maps/custom/` và `GIẢI BẢNG HIỆN TẠI`.
 
 #### B. Chạy Benchmark đánh giá bộ giải Kakuro trên Terminal (CLI)
 ```bash

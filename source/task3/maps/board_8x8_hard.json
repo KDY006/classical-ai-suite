@@ -1,6 +1,6 @@
 {
-  "name": "Hard Benchmark Board (8x8)",
-  "description": "8x8 Kakuro stability test board (41 white cells).",
+  "name": "Bảng nâng cao 8x8",
+  "description": "Bảng Kakuro 8x8 kiểm thử độ ổn định (41 ô trắng).",
   "grid": [
     [
       "B",

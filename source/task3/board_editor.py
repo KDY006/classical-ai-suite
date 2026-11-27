@@ -49,7 +49,7 @@ class BoardEditor:
     def set_cell_type(self, pos, white):
         r, c = pos
         if white and (r == 0 or c == 0):
-            raise ValueError('The first row and column must contain black or clue cells.')
+            raise ValueError('Hàng đầu tiên và cột đầu tiên bắt buộc là ô đen hoặc ô gợi ý.')
         if (self.grid[r][c] == 'W') == white:
             return
         self.grid[r][c] = 'W' if white else 'B'
@@ -58,10 +58,10 @@ class BoardEditor:
 
     def set_clue(self, pos, direction, value):
         if direction not in ('across', 'down') or not self.run_cells(pos, direction):
-            raise ValueError('There is no white-cell run in this direction.')
+            raise ValueError('Không có dãy ô trắng nào theo hướng này.')
         r, c = pos
         if self.grid[r][c] == 'W' or type(value) is not int or not 1 <= value <= 45:
-            raise ValueError('A clue sum must be an integer from 1 to 45.')
+            raise ValueError('Tổng gợi ý phải là số nguyên từ 1 đến 45.')
         cell = self.grid[r][c]
         clues = dict(cell) if isinstance(cell, dict) else {}
         clues[direction] = value
@@ -70,7 +70,7 @@ class BoardEditor:
     def set_given(self, pos, value):
         r, c = pos
         if self.grid[r][c] != 'W' or type(value) is not int or not 0 <= value <= 9:
-            raise ValueError('White cells accept digits 1-9; use 0 to clear.')
+            raise ValueError('Ô trắng chỉ nhận chữ số từ 1 đến 9; nhập 0 để xóa.')
         if value:
             self.givens[pos] = value
         else:
@@ -79,12 +79,12 @@ class BoardEditor:
     @classmethod
     def new(cls, size):
         if not 3 <= size <= 9:
-            raise ValueError('Board size must be between 3 and 9.')
+            raise ValueError('Kích thước bảng phải nằm trong khoảng từ 3 đến 9.')
         grid = [['B' if r == 0 or c == 0 else 'W' for c in range(size)] for r in range(size)]
         for i in range(1, size):
             grid[0][i] = {'down': sum((r+i)%9+1 for r in range(1,size))}
             grid[i][0] = {'across': sum((i+c)%9+1 for c in range(1,size))}
-        return cls(KakuroCSP(f'Custom Board {size}x{size}', grid))
+        return cls(KakuroCSP(f'Bảng tùy chỉnh {size}x{size}', grid))
 
     def bulk_rows(self):
         """One editable token per cell: #, 0, digit, or across/down."""
@@ -96,12 +96,12 @@ class BoardEditor:
     def apply_bulk_rows(self, rows):
         """Atomically replace all cells and givens; reject malformed layouts."""
         if len(rows) != self.rows:
-            raise ValueError(f'Expected {self.rows} rows.')
+            raise ValueError(f'Cần nhập đúng {self.rows} hàng.')
         grid, givens = [], {}
         for r,line in enumerate(rows):
             tokens = line.split()
             if len(tokens) != self.cols:
-                raise ValueError(f'Row {r+1}: expected {self.cols} cells separated by spaces.')
+                raise ValueError(f'Hàng {r+1}: cần đúng {self.cols} ô cách nhau bởi dấu cách.')
             row = []
             for c, token in enumerate(tokens):
                 if token == '#': row.append('B')
@@ -111,13 +111,13 @@ class BoardEditor:
                 elif '/' in token:
                     parts = token.split('/')
                     if len(parts) != 2 or not all(x.isascii() and x.isdigit() and len(x)<=2 for x in parts):
-                        raise ValueError(f'Cell ({r+1},{c+1}): use across/down, e.g. 17/0.')
+                        raise ValueError(f'Ô ({r+1},{c+1}): nhập theo dạng ngang/dọc, ví dụ 17/0.')
                     a,d = map(int, parts)
                     if not (0 <= a <= 45 and 0 <= d <= 45):
-                        raise ValueError(f'Cell ({r+1},{c+1}): clue must be 0-45.')
+                        raise ValueError(f'Ô ({r+1},{c+1}): tổng gợi ý phải từ 0 đến 45.')
                     row.append({k:v for k,v in [('across',a),('down',d)] if v} or 'B')
                 else:
-                    raise ValueError(f'Cell ({r+1},{c+1}): invalid token {token!r}.')
+                    raise ValueError(f'Ô ({r+1},{c+1}): ký hiệu không hợp lệ {token!r}.')
             grid.append(row)
         candidate = KakuroCSP(self.name, grid, givens=givens)
         self.grid, self.givens = deepcopy(candidate.raw_grid), dict(candidate.givens)
@@ -152,8 +152,8 @@ class BoardEditor:
         for run in csp.runs:
             if not run.is_consistent_partial(csp.givens):
                 r, c = run.clue_pos
-                direction = 'across' if run.orientation == 'ACROSS' else 'down'
-                raise ValueError(f'Conflict at {direction} clue ({r+1}, {c+1}): invalid sum or given digits.')
+                direction = 'ngang' if run.orientation == 'ACROSS' else 'dọc'
+                raise ValueError(f'Mâu thuẫn tại gợi ý {direction} ({r+1}, {c+1}): tổng hoặc số cho trước không hợp lệ.')
         return csp
 
     def save(self, path):

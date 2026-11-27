@@ -19,12 +19,12 @@ UI_FONT = "Helvetica" if sys.platform == "darwin" else ("Segoe UI" if sys.platfo
 class QueenWindow:
     def __init__(self, root):
         self.root = root
-        self.root.title("N-Queen | Task 1")
+        self.root.title("Bài toán N Quân Hậu | Nhiệm vụ 1")
         self.root.geometry("760x680")
         self.root.minsize(560, 600)
         self.root.configure(bg="#f5f4eb")
         self.size = tk.StringVar(value="8")
-        self.method = tk.StringVar(value="Glucose3")
+        self.method = tk.StringVar(value="Glucose3 (SAT)")
         self.status = tk.StringVar(value="Chọn kích thước và thuật toán, sau đó nhấn Giải.")
         self.detail = tk.StringVar(value="")
         self.board = None
@@ -45,18 +45,22 @@ class QueenWindow:
 
         page = ttk.Frame(root, padding=24, style="App.TFrame")
         page.pack(fill="both", expand=True)
-        ttk.Label(page, text="N-Queen", style="Title.TLabel").pack(anchor="w")
-        ttk.Label(page, text="Xếp các quân hậu sao cho không quân nào tấn công nhau.",
+        ttk.Label(page, text="Bài Toán N Quân Hậu (N-Queen)", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(page, text="Xếp N quân hậu lên bàn cờ N x N sao cho không có cặp quân hậu nào tấn công nhau.",
                   style="App.TLabel").pack(anchor="w", pady=(2, 18))
 
         controls = ttk.Frame(page, style="App.TFrame")
         controls.pack(fill="x")
-        ttk.Label(controls, text="Kích thước", style="App.TLabel").grid(row=0, column=0, sticky="w")
-        ttk.Label(controls, text="Thuật toán", style="App.TLabel").grid(row=0, column=1, sticky="w", padx=12)
+        ttk.Label(controls, text="Kích thước N", style="App.TLabel").grid(row=0, column=0, sticky="w")
+        ttk.Label(controls, text="Thuật toán giải", style="App.TLabel").grid(row=0, column=1, sticky="w", padx=12)
         self.size_input = ttk.Spinbox(controls, from_=4, to=50, textvariable=self.size, width=8)
         self.size_input.grid(row=1, column=0, sticky="ew", pady=(5, 0))
-        self.method_input = ttk.Combobox(controls, textvariable=self.method, state="readonly",
-                                         values=("Glucose3", "Min-Conflicts", "Max-Conflict + Tabu"))
+        self.method_input = ttk.Combobox(
+            controls,
+            textvariable=self.method,
+            state="readonly",
+            values=("Glucose3 (SAT)", "Min-Conflicts tiêu chuẩn", "Max-Conflict + Tabu (Đề xuất)"),
+        )
         self.method_input.grid(row=1, column=1, sticky="ew", padx=12, pady=(5, 0))
         controls.columnconfigure(1, weight=1)
         self.button = ttk.Button(controls, text="Giải", style="Solve.TButton", command=self.start)
@@ -85,13 +89,17 @@ class QueenWindow:
 
     def solve(self, n, method):
         try:
-            if method == "Glucose3":
+            if method == "Glucose3 (SAT)":
                 result = Glucose3NQueenSolver().solve(n)
                 board = result.board
                 solved = bool(board and board.is_valid_solution())
-                detail = f"{method}  •  {result.num_clauses:,} mệnh đề  •  {result.solve_time_sec * 1000:.1f} ms"
+                detail = f"{method}  •  {result.num_clauses:,} mệnh đề CNF  •  {result.solve_time_sec * 1000:.1f} ms"
             else:
-                strategy = RandomConflictedSelector() if method == "Min-Conflicts" else TabuMaxConflictSelector()
+                strategy = (
+                    RandomConflictedSelector()
+                    if method == "Min-Conflicts tiêu chuẩn"
+                    else TabuMaxConflictSelector()
+                )
                 result = MinConflictsSolver(strategy, max_steps=5000).solve(n)
                 board = result.board
                 solved = result.solved and board.is_valid_solution()
