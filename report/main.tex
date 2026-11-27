@@ -13,10 +13,10 @@
 \title{Giải Quyết Các Bài Toán Trí Tuệ Nhân Tạo Cổ Điển Bằng Logic Mệnh Đề, Tìm Kiếm Đối Kháng Và Thỏa Mãn Ràng Buộc}
 
 \author{
-\IEEEauthorblockN{Họ Tên Nhóm Trưởng (MSSV), Họ Tên Quý (MSSV),\\
-Huỳnh Thiện Đức (MSSV), Lê Tiến Đạt (MSSV), và Nguyễn Thành An}
+\IEEEauthorblockN{Nguyễn Văn Duy (52400010), Lê Văn Quý (52400153),\\
+Huỳnh Thiên Đức (5240110), Lê Tiến Đạt (52400105), và TS. Trịnh Hùng Cường}
 \IEEEauthorblockA{Khoa Công nghệ Thông tin, Trường Đại học Tôn Đức Thắng, TP. Hồ Chí Minh, Việt Nam\\
-Email: \{leader, quy, duc, dat\}@student.tdtu.edu.vn, nguyenthanhan@tdtu.edu.vn}
+Email: \{52400010, 52400153, 5240110, 52400105\}@student.tdtu.edu.vn, trinhhungcuong@tdtu.edu.vn}
 }
 
 \begin{document}
@@ -63,6 +63,25 @@ Sử dụng bộ giải \texttt{Glucose3} từ thư viện \texttt{PySAT} \cite{
     \label{fig:task1_mc}
 \end{figure}
 
+\begin{table}[t]
+\centering
+\caption{Tổng Hợp Thực Nghiệm N-Queen (CNF \& Min-Conflicts)}
+\label{tab:nqueen}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{ccccc}
+\toprule
+\textbf{$N$} & \textbf{Mệnh đề CNF} & \textbf{Bước TB (Chuẩn)} & \textbf{Bước TB (Tabu)} & \textbf{Giảm bước} \\
+\midrule
+16 & 6.352 & 96,0 & \textbf{30,7} & 68,0\% \\
+32 & 52.320 & 90,6 & \textbf{46,0} & 49,2\% \\
+64 & 430.208 & 107,2 & \textbf{63,3} & 41,0\% \\
+100 & 1.646.900 & 138,7 & \textbf{88,4} & 36,3\% \\
+150 & 5.572.800 & 179,5 & \textbf{125,1} & 30,3\% \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
+
 \section{Nhiệm Vụ 2: Đấu Tăng Đối Kháng Với Tìm Kiếm Tổng Bằng Không}
 
 \subsection{Mô Hình Hóa Zero-Sum Game Và Hàm Lượng Giá Chiến Thuật}
@@ -84,6 +103,24 @@ Do ván đấu đầy máu cần tối thiểu $\ge 12$ nửa lượt (ply) mớ
     \caption{Số trạng thái duyệt và thời gian ra quyết định của 4 cấu hình ở Tầng 1.}
     \label{fig:task2_bench}
 \end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Đối Sánh 4 Cấu Hình Trên Kịch Bản Tàn Cuộc Đối Đầu ($7\times 7$)}
+\label{tab:tank}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Cấu hình thuật toán} & \textbf{Nước đi} & \textbf{Độ sâu} & \textbf{Trạng thái} & \textbf{Cắt tỉa} \\
+\midrule
+Minimax thuần & BẮN & 6 & 30.278 & 0 \\
+Alpha-Beta thuần & BẮN & 6 & 2.213 & 539 \\
+Heuristic Minimax & BẮN & 4 & 1.004 & 0 \\
+\textbf{Heuristic Alpha-Beta} & \textbf{BẮN} & 4 & \textbf{34} & \textbf{17} \\
+\bottomrule
+\end{tabular}%
+}
+\end{table}
 
 \begin{figure*}[t]
     \centering
@@ -135,14 +172,21 @@ Qua $30$ lần đo độc lập cho mỗi cấu hình trên bốn bảng câu đ
     \label{fig:task3_bench}
 \end{figure}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.92\columnwidth]{figures/task3_kakuro_ui.png}
+    \caption{Giao diện PyGame trực quan hóa miền ứng viên $\{1..9\}$, hiệu ứng cắt tỉa lan truyền và quay lui trên bảng Kakuro $9\times 9$.}
+    \label{fig:task3_ui}
+\end{figure}
+
 \section{Đóng Góp Cá Nhân Và Tự Đánh Giá}
 
 \subsection{Phân Công Và Mức Độ Hoàn Thành Cá Nhân}
 \begin{itemize}
-    \item \textbf{Nhóm trưởng (Hoàn thành 100\% phần việc)}: Thiết kế kiến trúc OOP chung, quản lý hợp nhất nhánh Git, kiểm thử tương thích đa nền tảng (macOS 13.7.8), tổng hợp báo cáo IEEE và biên tập video demo.
-    \item \textbf{Quý (Hoàn thành 100\% phần việc)}: Phụ trách Nhiệm vụ 1 (mã hóa CNF, thực nghiệm \texttt{Glucose3}, thuật toán \texttt{Min-Conflicts} và heuristic Tabu, giao diện \texttt{gui.py}, Notebook phân tích).
-    \item \textbf{Huỳnh Thiện Đức (Hoàn thành 100\% phần việc)}: Phụ trách Nhiệm vụ 2 (engine bất biến Zero-Sum, bốn tác tử tìm kiếm đối kháng, hàm lượng giá, giao diện PyGame Arena, cơ chế nạp bot ngoài và thực nghiệm hai tầng).
-    \item \textbf{Lê Tiến Đạt (Hoàn thành 100\% phần việc)}: Phụ trách Nhiệm vụ 3 (mô hình hóa Kakuro CSP, tiền xử lý tổ hợp tổng, Forward Checking \& AC-3 mở rộng, heuristic MRV/Bậc/LCV, giao diện trực quan hóa, \texttt{BoardEditor} và kiểm thử thống kê).
+    \item \textbf{Nguyễn Văn Duy -- 52400010 (Nhóm trưởng, hoàn thành 100\%)}: Thiết kế kiến trúc OOP chung, quản lý hợp nhất nhánh Git, kiểm thử tương thích đa nền tảng (macOS 13.7.8), đồng bộ giao diện tiếng Việt, tổng hợp báo cáo IEEE và biên tập video demo.
+    \item \textbf{Lê Văn Quý -- 52400153 (Hoàn thành 100\%)}: Phụ trách Nhiệm vụ 1 (mã hóa CNF, thực nghiệm \texttt{Glucose3}, thuật toán \texttt{Min-Conflicts} và heuristic Tabu, giao diện \texttt{gui.py}, Notebook phân tích).
+    \item \textbf{Huỳnh Thiên Đức -- 5240110 (Hoàn thành 100\%)}: Phụ trách Nhiệm vụ 2 (engine bất biến Zero-Sum, bốn tác tử tìm kiếm đối kháng, hàm lượng giá, giao diện PyGame Arena, cơ chế nạp bot ngoài và thực nghiệm hai tầng).
+    \item \textbf{Lê Tiến Đạt -- 52400105 (Hoàn thành 100\%)}: Phụ trách Nhiệm vụ 3 (mô hình hóa Kakuro CSP, tiền xử lý tổ hợp tổng, Forward Checking \& AC-3 mở rộng, heuristic MRV/Bậc/LCV, giao diện trực quan hóa, \texttt{BoardEditor} và kiểm thử thống kê).
 \end{itemize}
 
 \subsection{Tự Đánh Giá Điểm Số}

@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from types import MappingProxyType
-from typing import Dict, Iterable, Mapping, Optional, Tuple
+from typing import Iterable, Mapping, Optional, Tuple
 
 from ..config import (
-    ALL_ACTIONS,
     DIRECTION_DELTAS,
     DRAW_UTILITY,
     FIRE,

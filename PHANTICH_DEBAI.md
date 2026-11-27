@@ -141,3 +141,26 @@ Bằng kiểm tra bất biến toán học (*Tổng mọi gợi ý hàng ngang p
    - Một ô trắng trong Kakuro chịu tác động của những ràng buộc nào? Khác biệt giữa `Forward Checking` và `Extended AC-3` là gì?
    - Giải thích phối hợp giữa `MRV`, `Degree` và `LCV`: tại sao chọn biến dùng chiến lược *fail-first* (khó nhất trước) nhưng chọn giá trị lại dùng *fail-last* (ít ràng buộc nhất trước)?
    - Tại sao trên bảng `9×9` (48 biến), chế độ `AC-3 mở rộng + Heuristic` giải xong với **0 lần quay lui** trong khi quay lui cơ bản tốn gần 1.000 lần quay lui?
+
+---
+
+## 3. Thông Tin Nhóm & Phân Công Công Việc (4 Thành Viên)
+
+- **Giảng viên hướng dẫn:** Tiến sĩ Trịnh Hùng Cường (`trinhhungcuong@tdtu.edu.vn`) *(đứng ở vị trí tác giả cuối cùng trong báo cáo khoa học IEEE theo quy định Task 4)*.
+- **Nguyên tắc phối hợp:** 3 thành viên phụ trách trọn vẹn 3 bài toán độc lập trên các nhánh Git riêng biệt; Nhóm trưởng xây dựng khung kiến trúc OOP chung, rà soát/hợp nhất mã nguồn (`merge`), đồng bộ ngôn ngữ & kiểm thử tích hợp đa nền tảng, biên tập báo cáo IEEE và điều phối video demo. Mọi thành viên đều phải đọc hiểu toàn bộ 3 Task để sẵn sàng phỏng vấn vấn đáp.
+
+### 3.1. Bảng phân công chi tiết từng thành viên
+
+| STT | Họ và tên | MSSV | Email sinh viên | Vai trò & Phụ trách chính | Nhiệm vụ chi tiết & Sản phẩm bàn giao | Mức độ hoàn thành |
+| :-: | :--- | :---: | :--- | :--- | :--- | :---: |
+| 1 | **Nguyễn Văn Duy** | `52400010` | `52400010@student.tdtu.edu.vn` | **Nhóm trưởng** *(Kiến trúc, Tích hợp, Kiểm thử & Task 4)* | Thiết kế cấu trúc dự án chuẩn OOP; quản lý kho lưu trữ GitHub, review & hợp nhất (merge) code 3 nhánh; rà soát lỗi tích hợp, chuẩn hóa tương thích macOS 13.7.8 & Việt hóa đồng bộ toàn bộ sản phẩm; biên tập báo cáo khoa học IEEE (`report/main.tex`, `report.pdf`), `README.md`, `requirement.txt`, `DEBAI.md`, `PHANTICH_DEBAI.md` và tổng hợp video demo (`demo.txt`). | 100% |
+| 2 | **Lê Văn Quý** | `52400153` | `52400153@student.tdtu.edu.vn` | **Thành viên — Phụ trách Task 1** *(N-Queen: Logic Mệnh Đề & Local Search)* | Mô hình hóa Logic mệnh đề và chuyển đổi CNF; cài đặt trọn bộ `source/task1/` (`board.py`, `cnf_encoder.py`, `sat_solver.py`, `min_conflicts.py`, `main_task1.py`); phát triển giao diện bàn cờ `gui.py`; chạy thực nghiệm `Glucose3` ($N \ge 4$) và đối sánh `Min-Conflicts` chuẩn với Heuristic `Max-Conflict + Tabu` trong `experiments_task1.ipynb` kèm biểu đồ & nội dung báo cáo Task 1. | 100% |
+| 3 | **Huỳnh Thiên Đức** | `5240110` | `5240110@student.tdtu.edu.vn` | **Thành viên — Phụ trách Task 2** *(Tank Battle: Tìm Kiếm Đối Kháng & PyGame)* | Mô hình hóa trò chơi Tổng bằng không (Zero-Sum Game); thiết kế engine trạng thái bất biến (`entities.py`, `game_state.py`, `game_engine.py`, `maps.py`) với vật lý đạn bay 3 ô/chu kỳ từng ô một; cài đặt 4 cấu hình thuật toán (`Minimax`, `Alpha-Beta`, `Heuristic Minimax`, `Heuristic Alpha-Beta`), hàm lượng giá `EVAL(s)`, giao diện PyGame Arena (`pygame_arena.py`, bộ sprite Kenney CC0), cơ chế nạp động bot nhóm ngoài (`external_agents/`) và thực nghiệm 2 tầng trong `benchmark_task2.ipynb`. | 100% |
+| 4 | **Lê Tiến Đạt** | `52400105` | `52400105@student.tdtu.edu.vn` | **Thành viên — Phụ trách Task 3** *(Kakuro: Bài Toán Thỏa Mãn Ràng Buộc CSP)* | Mô hình hóa Kakuro CSP $\langle X, D, C \rangle$ và số hóa 4 bản đồ JSON (`5×5`, `6×6`, `8×8`, `9×9`); cài đặt tiền xử lý `Sum Partitions`, `Forward Checking`, `Extended AC-3` và bộ giải kết hợp `MRV/Degree/LCV` (`csp_model.py`, `propagation.py`, `solver.py`); phát triển giao diện trực quan hóa PyGame đa luồng (`visualizer_ui.py`) kèm trình soạn thảo bảng (`board_editor.py`); thực nghiệm thống kê 30 lần chạy và kiểm thử tự động trong `experiments_task3.ipynb`. | 100% |
+
+### 3.2. Quy chuẩn đặt tên gói nộp bài cá nhân cho 4 thành viên
+Mỗi thành viên tự nén bản hoàn chỉnh cuối cùng và nộp cá nhân lên hệ thống theo đúng cú pháp `AI_final_<Project Group ID>_<Student ID>.zip`:
+- Nguyễn Văn Duy: `AI_final_<MaNhom>_52400010.zip`
+- Lê Văn Quý: `AI_final_<MaNhom>_52400153.zip`
+- Huỳnh Thiên Đức: `AI_final_<MaNhom>_5240110.zip`
+- Lê Tiến Đạt: `AI_final_<MaNhom>_52400105.zip`

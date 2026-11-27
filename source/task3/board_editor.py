@@ -1,8 +1,12 @@
 """Editable draft; validation and solving use the same CSP model as preset boards."""
+
+from __future__ import annotations
+
 from copy import deepcopy
 import json
 import random
 from pathlib import Path
+
 from .csp_model import KakuroCSP
 
 
@@ -104,20 +108,22 @@ class BoardEditor:
                 raise ValueError(f'Hàng {r+1}: cần đúng {self.cols} ô cách nhau bởi dấu cách.')
             row = []
             for c, token in enumerate(tokens):
-                if token == '#': row.append('B')
+                if token == '#':
+                    row.append('B')
                 elif token in '0123456789' and len(token) == 1:
                     row.append('W')
-                    if token != '0': givens[r,c] = int(token)
+                    if token != '0':
+                        givens[(r, c)] = int(token)
                 elif '/' in token:
                     parts = token.split('/')
-                    if len(parts) != 2 or not all(x.isascii() and x.isdigit() and len(x)<=2 for x in parts):
-                        raise ValueError(f'Ô ({r+1},{c+1}): nhập theo dạng ngang/dọc, ví dụ 17/0.')
-                    a,d = map(int, parts)
+                    if len(parts) != 2 or not all(x.isascii() and x.isdigit() and len(x) <= 2 for x in parts):
+                        raise ValueError(f'Ô ({r + 1},{c + 1}): nhập theo dạng ngang/dọc, ví dụ 17/0.')
+                    a, d = map(int, parts)
                     if not (0 <= a <= 45 and 0 <= d <= 45):
-                        raise ValueError(f'Ô ({r+1},{c+1}): tổng gợi ý phải từ 0 đến 45.')
-                    row.append({k:v for k,v in [('across',a),('down',d)] if v} or 'B')
+                        raise ValueError(f'Ô ({r + 1},{c + 1}): tổng gợi ý phải từ 0 đến 45.')
+                    row.append({k: v for k, v in [('across', a), ('down', d)] if v} or 'B')
                 else:
-                    raise ValueError(f'Ô ({r+1},{c+1}): ký hiệu không hợp lệ {token!r}.')
+                    raise ValueError(f'Ô ({r + 1},{c + 1}): ký hiệu không hợp lệ {token!r}.')
             grid.append(row)
         candidate = KakuroCSP(self.name, grid, givens=givens)
         self.grid, self.givens = deepcopy(candidate.raw_grid), dict(candidate.givens)

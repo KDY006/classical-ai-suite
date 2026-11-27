@@ -84,12 +84,3 @@ class AlphaBetaAgent(BaseTankAgent):
                 self._pruned += 1
                 break
         return best_value, best_action
-
-    @staticmethod
-    def _terminal_value(state: GameState, root_player: int, depth: int) -> float:
-        value = state.utility(root_player)
-        if value > 0:
-            return value - 0.01 * depth
-        if value < 0:
-            return value + 0.01 * depth
-        return value

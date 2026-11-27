@@ -48,9 +48,11 @@ Nếu trên máy Windows đã cài sẵn các thư viện trong `F:\Python311\py
 AI_final_<Project_Group_ID>_<Student_ID>/
 ├── README.md                           # Hướng dẫn cài đặt và vận hành chi tiết (Tiếng Việt)
 ├── requirement.txt                     # Danh sách thư viện Python cần thiết
-├── DESIGN_SPECIFICATION.md             # Tài liệu đặc tả kỹ thuật, toán học & phân công 4 thành viên
+├── DEBAI.md                            # Bản dịch nguyên văn đề bài gốc sang tiếng Việt
+├── PHANTICH_DEBAI.md                   # Phân tích chuyên sâu đề bài, phân công 4 thành viên & vấn đáp
+├── report.pdf                          # Báo cáo khoa học chuẩn hội nghị IEEE 2 cột (04 trang)
 ├── demo.txt                            # File chứa đường dẫn URL tới video demo của nhóm
-├── report/                             # Thư mục mã nguồn báo cáo khoa học chuẩn IEEE (Task 4)
+├── report/                             # Thư mục mã nguồn LaTeX báo cáo khoa học chuẩn IEEE (Task 4)
 │   ├── main.tex                        # Mã nguồn LaTeX mẫu hội nghị IEEE 2 cột (<= 5 trang)
 │   ├── references.bib                  # Danh mục tài liệu tham khảo chuẩn IEEE
 │   └── figures/                        # Biểu đồ thực nghiệm và ảnh chụp giao diện tự động xuất
@@ -98,7 +100,6 @@ AI_final_<Project_Group_ID>_<Student_ID>/
         ├── solver.py                   # Bộ giải KakuroSolver tích hợp MRV, Degree Heuristic và LCV
         ├── board_editor.py             # Trình chỉnh sửa, Bulk Edit, sinh đề ngẫu nhiên & lưu/nạp JSON
         ├── visualizer_ui.py            # Giao diện PyGame hiển thị miền {1..9}, cắt tỉa, quay lui & soạn thảo
-        ├── README.md                   # Tài liệu hướng dẫn chuyên sâu riêng cho Task 3
         ├── main_task3.py               # Điểm khởi chạy giao diện Kakuro Visualizer hoặc benchmark CLI
         └── experiments_task3.ipynb     # Jupyter Notebook đánh giá Task 3 (giữ nguyên output)
 ```
@@ -193,7 +194,7 @@ Mở trực tiếp trên VS Code hoặc chạy `jupyter lab` tại thư mục g�
 
 1. **Biên dịch `report.pdf` trên Overleaf**:
    - Tải toàn bộ thư mục `report/` (`main.tex`, `references.bib` và thư mục `figures/`) lên Overleaf.
-   - Điền Họ tên, MSSV và Email thực tế của 4 thành viên vào khối `\author{...}` trong `main.tex` (giữ tên giảng viên **Thanh-An Nguyen** ở vị trí tác giả cuối cùng).
+   - Kiểm tra lại Họ tên, MSSV và Email của 4 thành viên (và tên giảng viên hướng dẫn **TS. Trịnh Hùng Cường** ở vị trí tác giả cuối cùng) đã điền sẵn trong khối `\author{...}` của `main.tex`.
    - Biên dịch và tải file PDF đặt vào thư mục gốc dưới tên `report.pdf`.
 2. **Cập nhật `demo.txt` & Đóng gói cá nhân**:
    - Dán URL công khai của video demo vào `demo.txt`.

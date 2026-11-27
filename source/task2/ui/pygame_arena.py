@@ -6,8 +6,7 @@ import ctypes
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Tuple
-from typing import Dict, List
+from typing import Dict, List, Optional, Tuple
 
 import pygame
 
@@ -36,7 +35,7 @@ from ..config import (
     STAY,
     TANK_INITIAL_HP,
 )
-from ..engine import GameState, MapScenario, StepEvent, TankBattleEngine, get_all_scenarios
+from ..engine import MapScenario, TankBattleEngine, get_all_scenarios
 
 
 @dataclass

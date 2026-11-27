@@ -36,6 +36,16 @@ class BaseTankAgent(abc.ABC):
     def choose_action(self, state: GameState) -> str:
         """Choose one of ALL_ACTIONS for state.current_player."""
 
+    @staticmethod
+    def _terminal_value(state: GameState, root_player: int, depth: int) -> float:
+        """Return zero-sum terminal payoff with slight depth discount preferring faster wins."""
+        value = state.utility(root_player)
+        if value > 0:
+            return value - 0.01 * depth
+        if value < 0:
+            return value + 0.01 * depth
+        return value
+
     def safe_choose_action(self, state: GameState) -> str:
         """Run the bot against an immutable defensive snapshot."""
         protected_state = state.clone()
